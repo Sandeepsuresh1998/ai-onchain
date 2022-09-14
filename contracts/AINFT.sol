@@ -1,12 +1,13 @@
-//SPDX-License-Identifier: Unlicense
-pragma solidity ^0.8.0;
+//SPDX-License-Identifier: <SPDX-License>
+pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AINFTMarketplace is ERC721URIStorage {
+contract AINFT is ERC721URIStorage{
     
     address payable owner;
 
@@ -14,9 +15,10 @@ contract AINFTMarketplace is ERC721URIStorage {
     Counters.Counter private _tokenIds;
     Counters.Counter private _itemsSold;
     
-    uint256 listPrice = 0.01 ether;
+    uint256 LIST_PRICE = 0.01 ether;
 
-    constructor() ERC721("AINFTMarketplace", "AINFT") {
+    //Owner of the contract is the one who deploys it 
+    constructor() ERC721("AINFT", "AINFT") {
         owner = payable(msg.sender);
     }
 
@@ -32,14 +34,45 @@ contract AINFTMarketplace is ERC721URIStorage {
     // Mapping token id to metadata for a token
     mapping(uint256 => ListedToken) private idToListedToken;
 
+
+    function createListedToken(uint256 tokenId, uint256 price) private {
+        idToListedToken[tokenId] = ListedToken(
+            tokenId,
+            payable(address(this)),
+            payable(msg.sender),
+            price,
+            true
+        );
+
+        _transfer(msg.sender, address(this), tokenId);
+    }
+
+    //Note this functionality implies that when an NFT is created it is automatically listed as eell
+    function mintToken(string memory tokenURI) public payable returns (uint) {
+        require(msg.value == LIST_PRICE, "Send enough ether to list");
+
+        //Increment the tokenIds count because we are minting a new nft
+        _tokenIds.increment();
+        //Set the id of the newly minted nft to this
+        uint256 currentTokenId = _tokenIds.current();
+
+        //Actual safe mint call to mint the NFT this is inherited
+        _safeMint(msg.sender, currentTokenId);
+
+        //Set the tokenURI for the NFT, note do we not need validation here?
+        _setTokenURI(currentTokenId, tokenURI);
+
+        return currentTokenId;
+    }
+
     //This function can update the price to list an NFT on the entire marketplace
     function updateListPrice(uint256 _newListPrice) public payable {
         require(owner == msg.sender, "Only owner can update the listing price");
-        listPrice = _newListPrice;
+        LIST_PRICE = _newListPrice;
     }
 
     function getListPrice() public view returns (uint256) {
-        return listPrice;
+        return LIST_PRICE;
     }
 
     function getLatestIdToListedToken() public view returns (ListedToken memory) {
@@ -56,34 +89,7 @@ contract AINFTMarketplace is ERC721URIStorage {
         return _tokenIds.current();
     }
 
-
-    //Note this functionality implies that when an NFT is created it is automatically listed as eell
-    function createToken(string memory tokenURI) public payable returns (uint) {
-        require(msg.value == listPrice, "Send enough ether to list");
-        require(price > 0, "Make sure price is negative");
-
-        _tokenIds.increment();
-        uint256 currentTokenId = _tokenIds.current();
-        _safeMint(msg.sender, currentTokenId);
-
-        _setTokenURI(currentTokenId, tokenURI);
-
-        createListedToken(currentTokenId, price);
-
-        return currentTokenId;
-    }
-
-    function createListedToken(uint256 tokenId, uint256 price) private {
-        idToListedToken[tokenId] = ListedToken(
-            tokenId,
-            payable(address(this)),
-            payable(msg.sender),
-            price,
-            true
-        );
-
-        _transfer(msg.sender, address(this), tokenId);
-    }
+    
 
     //Get all NFTs that we have created on the marketplace
     function getAllNFTs() public view returns (ListedToken[] memory) {
@@ -144,7 +150,7 @@ contract AINFTMarketplace is ERC721URIStorage {
         approve(address(this), tokenId);
 
         //Wait why are we transfering the list price?
-        payable(owner).transfer(listPrice);
+        payable(owner).transfer(LIST_PRICE);
         payable(seller).transfer(msg.value);
     }
 }
