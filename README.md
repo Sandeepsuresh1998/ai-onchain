@@ -1,13 +1,14 @@
-# Sample Hardhat Project
-
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
-
-Try running some of the following tasks:
+# Deploying Contract
+Note: Ensure that you create a .env file with an alchemy key and a wallet's private key
 
 ```shell
-npx hardhat help
-npx hardhat test
-GAS_REPORT=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.js
+npx hardhat run --network goerli scripts/deploy.js
 ```
+# Minting an NFT
+```shell
+node scripts/mint-nft.js
+```
+If you want to modify the contents of the NFT itself you can update the `tokenURI` variable in
+mint-nft.js. 
+Note: Please make sure that the mint-nft.js has the right contract address after you deploy 
+the contract to goerli.
