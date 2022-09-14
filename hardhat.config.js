@@ -12,6 +12,6 @@ module.exports = {
       goerli: {
          url: API_URL,
          accounts: [`0x${PRIVATE_KEY}`]
-      }
+      },
    },
 }

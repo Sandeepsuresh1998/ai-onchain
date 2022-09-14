@@ -22,7 +22,9 @@
     "hardhat": "^2.11.1"
   },
   "dependencies": {
+    "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@openzeppelin/contracts": "^4.7.3",
-    "dotenv": "^16.0.2"
+    "dotenv": "^16.0.2",
+    "web3": "^1.8.0"
   }
 }

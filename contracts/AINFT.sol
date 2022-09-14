@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: <SPDX-License>
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
 import "hardhat/console.sol";
@@ -56,7 +56,7 @@ contract AINFT is ERC721URIStorage{
     // TODO: Who should be able to access this function?
     function setOwner(address owner, bytes32 textId, string memory tokenURI) internal {
         bool textIdAlreadyExists = checkIfTextIdExistsInRegistry(textId);
-        if (textIdAlreadyExists) {
+        if (textIdAlreadyExists == true) {
             //TODO through some error
             revert(); //Not sure if this makes sense
         }
@@ -92,8 +92,8 @@ contract AINFT is ERC721URIStorage{
         // Another check to ensure textId doesn't already have an owner
         assert(checkIfTextIdExistsInRegistry(textId) == true);
         
-        //TextId is clear, add the textId to the registry
-        setOwner(recipient, textId, tokenURI);
+        // TextId is clear, add the textId to the registry
+        //setOwner(recipient, textId, tokenURI);
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
@@ -192,7 +192,7 @@ contract AINFT is ERC721URIStorage{
         _transfer(address(this), msg.sender, tokenId);
 
         approve(address(this), tokenId);
-        
+
         payable(_owner).transfer(LIST_PRICE);
         payable(seller).transfer(msg.value);
     }
