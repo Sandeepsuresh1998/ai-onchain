@@ -93,7 +93,7 @@ contract AINFT is ERC721URIStorage{
         assert(checkIfTextIdExistsInRegistry(textId) == true);
         
         // TextId is clear, add the textId to the registry
-        //setOwner(recipient, textId, tokenURI);
+        setOwner(recipient, textId, tokenURI);
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
