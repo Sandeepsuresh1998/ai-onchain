@@ -57,8 +57,8 @@ contract AINFTMarketplace is ERC721URIStorage {
     }
 
 
-    //Note this functionality implies that when an NFT is listed it is automatically minted
-    function createToken(string memory tokenURI, uint256 price) public payable returns (uint) {
+    //Note this functionality implies that when an NFT is created it is automatically listed as eell
+    function createToken(string memory tokenURI) public payable returns (uint) {
         require(msg.value == listPrice, "Send enough ether to list");
         require(price > 0, "Make sure price is negative");
 

@@ -1,0 +1,23 @@
+{
+  "name": "ai-onchain",
+  "version": "1.0.0",
+  "description": "This repo contains an experiment to create an NFT marketplace that is only for AI art",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Sandeepsuresh1998/ai-onchain.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Sandeepsuresh1998/ai-onchain/issues"
+  },
+  "homepage": "https://github.com/Sandeepsuresh1998/ai-onchain#readme",
+  "devDependencies": {
+    "hardhat": "^2.11.1"
+  }
+}
