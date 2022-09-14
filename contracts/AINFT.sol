@@ -9,21 +9,17 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AINFT is ERC721URIStorage{
     
-    address payable owner;
+    address payable _owner;
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     Counters.Counter private _itemsSold;
 
-    // TODO: Create dynamic list of key that includes hash of text for picture
-    // TODO: This is starting to run up gas costs see where we can optimize
-    bytes32[] private _registry;
-    
     uint256 LIST_PRICE = 0.01 ether;
 
     //Owner of the contract is the one who deploys it 
     constructor() ERC721("AINFT", "AINFT") {
-        owner = payable(msg.sender);
+        _owner = payable(msg.sender);
     }
 
     // Struct for the NFT itself with all the different attributes we want to have
@@ -38,33 +34,40 @@ contract AINFT is ERC721URIStorage{
     // Mapping token id to metadata for a token
     mapping(uint256 => ListedToken) private idToListedToken;
 
-    // Mappinng of registry text hash to the tokenURI for that text
-    mapping(bytes32 => string) private textIdToTokenURI;
+    // Record class that specifies owner and tokenURIs for a unique text
+    struct Record {
+        address owner;
+        string tokenURI;
+    }
 
-    // Mapping of whether the modelTextId is in the registry
-    mapping(bytes32 => bool) internal textIdExistsMapping;
+    // Registry that holds mapping of a text id to a record
+    mapping(bytes32 => Record) registry;
 
-    function checkIfTextIdExistsInModel(bytes32 hashedTextId) public view returns (bool) {
-        if (textIdExistsMapping[hashedTextId] == true) {
+    // Mapping of whether the textId is in the registry
+    mapping(bytes32 => bool) internal textIdExistsInRegistry;
+
+    function checkIfTextIdExistsInRegistry(bytes32 textId) public view returns (bool) {
+        if (textIdExistsInRegistry[textId] == true) {
             return true;
         }
         return false;
     }
 
     // TODO: Who should be able to access this function?
-    function updateRegistryWithNewTextId(bytes32 hashedTextId) private {
-        bool textIdAlreadyExists = checkIfTextIdExistsInModel(hashedTextId);
+    function setOwner(address owner, bytes32 textId, string memory tokenURI) internal {
+        bool textIdAlreadyExists = checkIfTextIdExistsInRegistry(textId);
         if (textIdAlreadyExists) {
             //TODO through some error
             revert(); //Not sure if this makes sense
         }
         // TextId doesn't already exist, so add to registry
-        _registry.push(hashedTextId);
+        registry[textId] = Record(
+            owner,
+            tokenURI
+        );
         
         // Add hashed text id to the mapping
-        textIdExistsMapping[hashedTextId] = true;
-
-        
+        textIdExistsInRegistry[textId] = true; 
         
     }
 
@@ -81,14 +84,20 @@ contract AINFT is ERC721URIStorage{
     }
 
     //Note this functionality implies that when an NFT is created it is automatically listed as eell
-    function mintToken(address recipient, string memory tokenURI) public payable returns (uint) {
+    function mintToken(address recipient, bytes32 textId, string memory tokenURI) public payable returns (uint) {
         // TODO: Add a mint price
         // TODO: Add a cap for number of mints allowed
         // require(msg.value == LIST_PRICE, "Send enough ether to list");
 
+        // Another check to ensure textId doesn't already have an owner
+        assert(checkIfTextIdExistsInRegistry(textId) == true);
+        
+        //TextId is clear, add the textId to the registry
+        setOwner(recipient, textId, tokenURI);
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
+
         //Set the id of the newly minted nft to this
         uint256 currentTokenId = _tokenIds.current();
 
@@ -103,10 +112,11 @@ contract AINFT is ERC721URIStorage{
 
     //This function can update the price to list an NFT on the entire marketplace
     function updateListPrice(uint256 _newListPrice) public payable {
-        require(owner == msg.sender, "Only owner can update the listing price");
+        require(_owner == msg.sender, "Only owner can update the listing price");
         LIST_PRICE = _newListPrice;
     }
 
+    // Below are all heloer view functions
     function getListPrice() public view returns (uint256) {
         return LIST_PRICE;
     }
@@ -182,9 +192,8 @@ contract AINFT is ERC721URIStorage{
         _transfer(address(this), msg.sender, tokenId);
 
         approve(address(this), tokenId);
-
-        //Wait why are we transfering the list price?
-        payable(owner).transfer(LIST_PRICE);
+        
+        payable(_owner).transfer(LIST_PRICE);
         payable(seller).transfer(msg.value);
     }
 }
