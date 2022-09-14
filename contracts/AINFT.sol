@@ -54,13 +54,11 @@ contract AINFT is ERC721URIStorage{
     }
 
     // TODO: Who should be able to access this function?
-    function setOwner(address owner, bytes32 textId, string memory tokenURI) internal {
-        bool textIdAlreadyExists = checkIfTextIdExistsInRegistry(textId);
-        if (textIdAlreadyExists == true) {
-            //TODO through some error
-            revert(); //Not sure if this makes sense
-        }
-        // TextId doesn't already exist, so add to registry
+    function setOwner(address owner, bytes32 textId, string memory tokenURI) public {
+        // Ensure address doesn't already exist
+        require(checkIfTextIdExistsInRegistry(textId) == true, "Hash already exists with an owner");
+        
+        // TextId is clear, add the textId to the registry
         registry[textId] = Record(
             owner,
             tokenURI
@@ -84,16 +82,16 @@ contract AINFT is ERC721URIStorage{
     }
 
     //Note this functionality implies that when an NFT is created it is automatically listed as eell
-    function mintToken(address recipient, bytes32 textId, string memory tokenURI) public payable returns (uint) {
+    function mintToken(bytes32 textId) public payable returns (uint) {
         // TODO: Add a mint price
         // TODO: Add a cap for number of mints allowed
         // require(msg.value == LIST_PRICE, "Send enough ether to list");
-
-        // Another check to ensure textId doesn't already have an owner
-        assert(checkIfTextIdExistsInRegistry(textId) == true);
+        require(checkIfTextIdExistsInRegistry(textId) == true);
         
-        // TextId is clear, add the textId to the registry
-        setOwner(recipient, textId, tokenURI);
+        // Grab record for text id
+        Record memory record = registry[textId];
+
+        require(record.owner == msg.sender, "Only owner can mint this");
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
@@ -102,10 +100,10 @@ contract AINFT is ERC721URIStorage{
         uint256 currentTokenId = _tokenIds.current();
 
         //Actual safe mint call to mint the NFT this is inherited
-        _safeMint(recipient, currentTokenId);
+        _safeMint(record.owner, currentTokenId);
 
         //Set the tokenURI for the NFT, note do we not need validation here?
-        _setTokenURI(currentTokenId, tokenURI);
+        _setTokenURI(currentTokenId, record.tokenURI);
 
         return currentTokenId;
     }
