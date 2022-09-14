@@ -48,8 +48,8 @@ contract AINFT is ERC721URIStorage{
     }
 
     //Note this functionality implies that when an NFT is created it is automatically listed as eell
-    function mintToken(string memory tokenURI) public payable returns (uint) {
-        require(msg.value == LIST_PRICE, "Send enough ether to list");
+    function mintToken(address recipient, string memory tokenURI) public payable returns (uint) {
+        // require(msg.value == LIST_PRICE, "Send enough ether to list");
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
@@ -57,7 +57,7 @@ contract AINFT is ERC721URIStorage{
         uint256 currentTokenId = _tokenIds.current();
 
         //Actual safe mint call to mint the NFT this is inherited
-        _safeMint(msg.sender, currentTokenId);
+        _safeMint(recipient, currentTokenId);
 
         //Set the tokenURI for the NFT, note do we not need validation here?
         _setTokenURI(currentTokenId, tokenURI);
