@@ -14,6 +14,10 @@ contract AINFT is ERC721URIStorage{
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
     Counters.Counter private _itemsSold;
+
+    // TODO: Create dynamic list of key that includes hash of text for picture
+    // TODO: This is starting to run up gas costs see where we can optimize
+    bytes32[] private _registry;
     
     uint256 LIST_PRICE = 0.01 ether;
 
@@ -34,6 +38,35 @@ contract AINFT is ERC721URIStorage{
     // Mapping token id to metadata for a token
     mapping(uint256 => ListedToken) private idToListedToken;
 
+    // Mappinng of registry text hash to the tokenURI for that text
+    mapping(bytes32 => string) private textIdToTokenURI;
+
+    // Mapping of whether the modelTextId is in the registry
+    mapping(bytes32 => bool) internal textIdExistsMapping;
+
+    function checkIfTextIdExistsInModel(bytes32 hashedTextId) public view returns (bool) {
+        if (textIdExistsMapping[hashedTextId] == true) {
+            return true;
+        }
+        return false;
+    }
+
+    // TODO: Who should be able to access this function?
+    function updateRegistryWithNewTextId(bytes32 hashedTextId) private {
+        bool textIdAlreadyExists = checkIfTextIdExistsInModel(hashedTextId);
+        if (textIdAlreadyExists) {
+            //TODO through some error
+            revert(); //Not sure if this makes sense
+        }
+        // TextId doesn't already exist, so add to registry
+        _registry.push(hashedTextId);
+        
+        // Add hashed text id to the mapping
+        textIdExistsMapping[hashedTextId] = true;
+
+        
+        
+    }
 
     function createListedToken(uint256 tokenId, uint256 price) private {
         idToListedToken[tokenId] = ListedToken(
@@ -49,7 +82,10 @@ contract AINFT is ERC721URIStorage{
 
     //Note this functionality implies that when an NFT is created it is automatically listed as eell
     function mintToken(address recipient, string memory tokenURI) public payable returns (uint) {
+        // TODO: Add a mint price
+        // TODO: Add a cap for number of mints allowed
         // require(msg.value == LIST_PRICE, "Send enough ether to list");
+
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
@@ -88,8 +124,6 @@ contract AINFT is ERC721URIStorage{
     function getCurrentToken() public view returns (uint256) {
         return _tokenIds.current();
     }
-
-    
 
     //Get all NFTs that we have created on the marketplace
     function getAllNFTs() public view returns (ListedToken[] memory) {
