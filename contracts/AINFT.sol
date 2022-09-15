@@ -15,7 +15,10 @@ contract AINFT is ERC721URIStorage{
     Counters.Counter private _tokenIds;
     Counters.Counter private _itemsSold;
 
+    uint256 MINT_PRICE = 0.05 ether;
     uint256 LIST_PRICE = 0.01 ether;
+
+    uint256 MAX_AI_SUPPLY = 10000000;
 
     //Owner of the contract is the one who deploys it 
     constructor() ERC721("AINFT", "AINFT") {
@@ -31,79 +34,126 @@ contract AINFT is ERC721URIStorage{
         bool currentlyListed;
     }
 
+    //the event emitted when a token is successfully listed
+    event TokenListedSuccess (
+        uint256 indexed tokenId,
+        address owner,
+        address seller,
+        uint256 price,
+        bool currentlyListed
+    );
+
     // Mapping token id to metadata for a token
     mapping(uint256 => ListedToken) private idToListedToken;
 
-    // // Record class that specifies owner and tokenURIs for a unique text
-    // struct Record {
-    //     address owner;
-    //     string tokenURI;
-    // }
+    // Registry that holds all unique text ids 
+    mapping(bytes32 => bool) internal registry;
 
-    // Registry that holds mapping of a text id to an address
-    mapping(bytes32 => address) internal registry;
+    //Mapping of tokenId to the text ID of the token
+    mapping(uint256 => bytes32) internal tokenIdToTextId;
 
-    // Mapping of whether the textId is in the registry
-    mapping(bytes32 => bool) internal textIdExistsInRegistry;
+    /*
+        Function to mint the NFT
+        params:
+            address recipient: Address that will receive the newly minted NFT
+            string memory tokenURI: TokenURI that will resolve to the NFTs json metadata
+            bytes32 textId: The hashed (sha3) of the text input for the model (note this should be normalized)
 
-    function checkIfTextIdExistsInRegistry(bytes32 textId) public view returns (bool) {
-        if (textIdExistsInRegistry[textId] == true) {
-            return true;
+    */
+    function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
+        // TODO: Add a mint price
+        // TODO: Add a cap for number of mints allowed
+        require(msg.value == MINT_PRICE, "Send enough ether to mint");
+        require(registry[textId] == false, "Text has alredy been claimed");
+
+        // Create registry entry for the new text id
+        registry[textId] = true;
+
+        // Increment the tokenIds count because we are minting a new nft
+        _tokenIds.increment();
+
+        // Set the id of the newly minted nft to this
+        uint256 currentTokenId = _tokenIds.current();
+
+        if (currentTokenId > MAX_AI_SUPPLY) {
+            revert("This NFT project has been sold out");
         }
-        return false;
+
+        // Create mapping of token id to text id
+        tokenIdToTextId[currentTokenId] = textId;
+
+        // Actual safe mint call to mint the NFT this is inherited
+        _safeMint(recipient, currentTokenId);
+
+        // Set the tokenURI for the NFT
+        // TODO: tokenURI validation here (might be expensive)?
+        _setTokenURI(currentTokenId, tokenURI);
+
+        payable(_owner).transfer(msg.value);
+
+        return currentTokenId;
     }
 
-    // TODO: Who should be able to access this function?
-    function setOwner(address owner, bytes32 textId) public {
-        // Ensure address doesn't already exist
-        //require(checkIfTextIdExistsInRegistry(textId) == true, "Hash already exists with an owner");
-        
-        // TextId is clear, add the textId to the registry
-        registry[textId] = owner;
-        
-        // Add hashed text id to the mapping
-        textIdExistsInRegistry[textId] = true; 
-        
-    }
-
+    /*
+        Function to list an NFT for sale. It will also cost some small fee to actually list the NFT. 
+        params:
+            uint256: The token id of the NFT that owner is trying to sell
+            uint256: Price in ether you'd like to list your art for
+    */
     function createListedToken(uint256 tokenId, uint256 price) private {
+        //Make sure the sender sent enough ETH to pay for listing
+        require(msg.value == LIST_PRICE, "Please send enough ETH for list price");
+
+        //Price sanity check
+        require(price > 0, "Make sure the price isn't negative");
+
+        // Create mapping of tokenId is now listed
         idToListedToken[tokenId] = ListedToken(
             tokenId,
-            payable(address(this)),
+            payable(address(this)), //When you list give up ownership to smart contract itself
             payable(msg.sender),
             price,
             true
         );
 
         _transfer(msg.sender, address(this), tokenId);
+
+        //Emit the event for successful transfer. The frontend parses this message and updates the end user
+        emit TokenListedSuccess(
+            tokenId,
+            address(this),
+            msg.sender,
+            price,
+            true
+        );
     }
 
-    //Note this functionality implies that when an NFT is created it is automatically listed as eell
-    function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
-        // TODO: Add a mint price
-        // TODO: Add a cap for number of mints allowed
-        // require(msg.value == LIST_PRICE, "Send enough ether to list");
-        require(checkIfTextIdExistsInRegistry(textId) == false, "Text has alredy been claimed");
 
-        // Create registry entry for the recepient address
-        registry[textId] = recipient;
+    /*
+        Function to actually execute the sale of the NFT to another address
+    */
+    function executeSale(uint256 tokenId) public payable {
+        uint price = idToListedToken[tokenId].price;
+        address seller = idToListedToken[tokenId].seller;
+        require(msg.value == price, "Please submit the asking price");
+
         
-        // Add hashed text id to the mapping
-        textIdExistsInRegistry[textId] = true; 
+        idToListedToken[tokenId].currentlyListed = false; //Note example contracts keep this as true not sure why
+        idToListedToken[tokenId].owner = payable(msg.sender);
+        idToListedToken[tokenId].seller = payable(msg.sender);
+        _itemsSold.increment();
 
-        //Increment the tokenIds count because we are minting a new nft
-        _tokenIds.increment();
+        // Update registry for new owner
+        
 
-        //Set the id of the newly minted nft to this
-        uint256 currentTokenId = _tokenIds.current();
+        _transfer(address(this), msg.sender, tokenId);
 
-        //Actual safe mint call to mint the NFT this is inherited
-        _safeMint(recipient, currentTokenId);
+        approve(address(this), tokenId);
 
-        //Set the tokenURI for the NFT, note do we not need validation here?
-        _setTokenURI(currentTokenId, tokenURI);
+        payable(_owner).transfer(LIST_PRICE);
+        payable(seller).transfer(msg.value);
 
-        return currentTokenId;
+        //TODO: Emit a event for item sold
     }
 
     //This function can update the price to list an NFT on the entire marketplace
@@ -173,23 +223,5 @@ contract AINFT is ERC721URIStorage{
         }
 
         return items;
-    }
-
-    function executeSale(uint256 tokenId) public payable {
-        uint price = idToListedToken[tokenId].price;
-        require(msg.value == price, "Please submit the asking price");
-
-        address seller = idToListedToken[tokenId].seller;
-        
-        idToListedToken[tokenId].currentlyListed = false;
-        idToListedToken[tokenId].seller = payable(msg.sender);
-        _itemsSold.increment();
-
-        _transfer(address(this), msg.sender, tokenId);
-
-        approve(address(this), tokenId);
-
-        payable(_owner).transfer(LIST_PRICE);
-        payable(seller).transfer(msg.value);
     }
 }

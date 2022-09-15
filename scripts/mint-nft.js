@@ -41,13 +41,15 @@ const mintNFT = async () => {
     console.log(`Mint finished! Check it out at: https://goerli.etherscan.io/tx/${nftTxn.hash}`)
 }
 
-function checkRegistry(hashedTextId) {
+const checkRegistry = async (hashedTextId)  => {
     console.log("calling check registry")
-    let hashExists = aiNFTContract.checkIfTextIdExistsInRegistry(hashedTextId)
+    let hashExists = await aiNFTContract.checkIfTextIdExistsInRegistry(hashedTextId)
+
     console.log(hashExists);
 }
 
-mintNFT(signer.getAddress(), tokenUri, hash)
+
+checkRegistry(hash)
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);
