@@ -34,14 +34,14 @@ contract AINFT is ERC721URIStorage{
     // Mapping token id to metadata for a token
     mapping(uint256 => ListedToken) private idToListedToken;
 
-    // Record class that specifies owner and tokenURIs for a unique text
-    struct Record {
-        address owner;
-        string tokenURI;
-    }
+    // // Record class that specifies owner and tokenURIs for a unique text
+    // struct Record {
+    //     address owner;
+    //     string tokenURI;
+    // }
 
-    // Registry that holds mapping of a text id to a record
-    mapping(bytes32 => Record) registry;
+    // Registry that holds mapping of a text id to an address
+    mapping(bytes32 => address) internal registry;
 
     // Mapping of whether the textId is in the registry
     mapping(bytes32 => bool) internal textIdExistsInRegistry;
@@ -54,15 +54,12 @@ contract AINFT is ERC721URIStorage{
     }
 
     // TODO: Who should be able to access this function?
-    function setOwner(address owner, bytes32 textId, string memory tokenURI) public {
+    function setOwner(address owner, bytes32 textId) public {
         // Ensure address doesn't already exist
-        require(checkIfTextIdExistsInRegistry(textId) == true, "Hash already exists with an owner");
+        //require(checkIfTextIdExistsInRegistry(textId) == true, "Hash already exists with an owner");
         
         // TextId is clear, add the textId to the registry
-        registry[textId] = Record(
-            owner,
-            tokenURI
-        );
+        registry[textId] = owner;
         
         // Add hashed text id to the mapping
         textIdExistsInRegistry[textId] = true; 
@@ -82,16 +79,17 @@ contract AINFT is ERC721URIStorage{
     }
 
     //Note this functionality implies that when an NFT is created it is automatically listed as eell
-    function mintToken(bytes32 textId) public payable returns (uint) {
+    function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
         // TODO: Add a mint price
         // TODO: Add a cap for number of mints allowed
         // require(msg.value == LIST_PRICE, "Send enough ether to list");
-        require(checkIfTextIdExistsInRegistry(textId) == true);
-        
-        // Grab record for text id
-        Record memory record = registry[textId];
+        require(checkIfTextIdExistsInRegistry(textId) == false, "Text has alredy been claimed");
 
-        require(record.owner == msg.sender, "Only owner can mint this");
+        // Create registry entry for the recepient address
+        registry[textId] = recipient;
+        
+        // Add hashed text id to the mapping
+        textIdExistsInRegistry[textId] = true; 
 
         //Increment the tokenIds count because we are minting a new nft
         _tokenIds.increment();
@@ -100,10 +98,10 @@ contract AINFT is ERC721URIStorage{
         uint256 currentTokenId = _tokenIds.current();
 
         //Actual safe mint call to mint the NFT this is inherited
-        _safeMint(record.owner, currentTokenId);
+        _safeMint(recipient, currentTokenId);
 
         //Set the tokenURI for the NFT, note do we not need validation here?
-        _setTokenURI(currentTokenId, record.tokenURI);
+        _setTokenURI(currentTokenId, tokenURI);
 
         return currentTokenId;
     }

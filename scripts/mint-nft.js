@@ -24,7 +24,7 @@ const signer = new ethers.Wallet(privateKey, provider)
 
 // Get contract ABI and address
 const abi = contract.abi
-const contractAddress =  "0x576941204434695E62115a4a57914910B93c7819"
+const contractAddress =  "0x958F2B9A4dF5A3D8c3B53084CF018cAe6478C616"
 
 // Create a contract instance
 const aiNFTContract = new ethers.Contract(contractAddress, abi, signer)
@@ -35,32 +35,19 @@ const tokenUri = "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9
 
 // Call mintNFT function
 const mintNFT = async () => {
-    console.log("Calls set owner")
-    let ownerTxn = await aiNFTContract.setOwner(signer.address, hash, tokenUri)
-    console.log("Starting to set owner")
-    await ownerTxn.wait()
-    console.log("Owner set")
-    console.log("Starting to mint")
-    let nftTxn = await aiNFTContract.mintNFT(hash)
+    console.log(signer.address)
+    let nftTxn = await aiNFTContract.mintToken(signer.address, tokenUri, hash)
     await nftTxn.wait()
     console.log(`Mint finished! Check it out at: https://goerli.etherscan.io/tx/${nftTxn.hash}`)
-
 }
 
-const checkRegistry = async (hashedTextId) => {
+function checkRegistry(hashedTextId) {
     console.log("calling check registry")
-    let hashExists = await aiNFTContract.checkIfTextIdExistsInRegistry(hashedTextId)
+    let hashExists = aiNFTContract.checkIfTextIdExistsInRegistry(hashedTextId)
     console.log(hashExists);
 }
 
-const setOwner = async (owner, textId, passed_token_uri) => {
-    console.log("Calling set owner")
-    await aiNFTContract.setOwner(owner, textId, passed_token_uri);
-    let hashExists = await aiNFTContract.checkIfTextIdExistsInRegistry(textId)
-    console.log(hashExists);
-}
-
-setOwner(signer.address, hash, tokenUri)
+mintNFT(signer.getAddress(), tokenUri, hash)
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);
