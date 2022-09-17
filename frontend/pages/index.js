@@ -1,8 +1,37 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '../styles/Home.module.css'
+import React, {useState, useEffect} from 'react';
+
+let Web3 = require('web3');
+
+
+
 
 export default function Home() {
+
+  const [web3, setWeb3] = useState(null)
+  const [address, setAddress] = useState(null)
+  const [contract, setContract] = useState(null)
+  const contract_path = require("../../artifacts/contracts/AINFT.sol/AINFT.json");
+  let abi = contract_path.abi // Paste your ABI here
+  let contractAddress = "0x958F2B9A4dF5A3D8c3B53084CF018cAe6478C616" 
+
+  useEffect(() => {
+    window.ethereum ?
+      ethereum.request({ method: "eth_requestAccounts" }).then((accounts) => {
+        setAddress(accounts[0])
+        let w3 = new Web3(ethereum)
+        setWeb3(w3)
+        console.log("Address: " + accounts[0])
+        let c = new w3.eth.Contract(abi, contractAddress)
+        setContract(c)
+        contract.methods.getAllNFTs().call().then((tokens) => {
+          console.log(tokens)
+        })
+      }).catch((err) => console.log(err))
+    : console.log("Please install MetaMask")
+  }, [])
   return (
     <div className={styles.container}>
       <Head>

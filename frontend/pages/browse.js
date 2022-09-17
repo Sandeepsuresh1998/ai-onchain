@@ -6,4 +6,10 @@ function Browse() {
     )
 }
 
+export async function getStaticProps() {
+    // Call an external API to get all the NFTs
+
+    
+}
+
 export default Browse
