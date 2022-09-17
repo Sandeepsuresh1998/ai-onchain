@@ -18,7 +18,8 @@ contract AINFT is ERC721URIStorage{
     uint256 MINT_PRICE = 0.05 ether;
     uint256 LIST_PRICE = 0.01 ether;
 
-    uint256 MAX_AI_SUPPLY = 10000000;
+    uint256 MAX_AI_SUPPLY = 10000;
+    uint256 MAX_MINTS = 5;
 
     //Owner of the contract is the one who deploys it 
     constructor() ERC721("AINFT", "AINFT") {
@@ -52,6 +53,9 @@ contract AINFT is ERC721URIStorage{
     //Mapping of tokenId to the text ID of the token
     mapping(uint256 => bytes32) internal tokenIdToTextId;
 
+    //Mapping of number of mints for an address
+    mapping(address => uint) public walletMints;
+
     /*
         Function to mint the NFT
         params:
@@ -61,10 +65,9 @@ contract AINFT is ERC721URIStorage{
 
     */
     function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
-        // TODO: Add a mint price
-        // TODO: Add a cap for number of mints allowed
-        require(msg.value == MINT_PRICE, "Send enough ether to mint");
+        require(msg.value == MINT_PRICE, "beep boop need more eth to mint");
         require(registry[textId] == false, "Text has alredy been claimed");
+        require(walletMints[recipient] <= MAX_MINTS, "You have already minted your limit");
 
         // Create registry entry for the new text id
         registry[textId] = true;
@@ -89,7 +92,12 @@ contract AINFT is ERC721URIStorage{
         // TODO: tokenURI validation here (might be expensive)?
         _setTokenURI(currentTokenId, tokenURI);
 
+        // Transfer mint fee to wallet
         payable(_owner).transfer(msg.value);
+
+        // Increment number of mints for the user
+        uint mints = walletMints[recipient];
+        walletMints[recipient] = mints+1;
 
         return currentTokenId;
     }
