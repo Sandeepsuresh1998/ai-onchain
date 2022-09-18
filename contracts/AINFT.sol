@@ -32,7 +32,7 @@ contract AINFT is ERC721URIStorage, Ownable {
     mapping(address => uint) public walletMints;
 
     function contractURI() public pure returns (string memory) {
-        return "https://gateway.pinata.cloud/ipfs/QmTreSU7KTvgqHphcKxGnkuZL84WWeEHPsZ5xCEnSA9vkr";
+        return "https://gateway.pinata.cloud/ipfs/QmYiDdgY7Nxsf3fNnCUWNHVtn2fmSBMYYr1QxNS8c5ehEW";
     }
 
     /*

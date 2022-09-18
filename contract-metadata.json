@@ -1,7 +1,7 @@
 {
     "name": "AI meets NFTs",
     "description": "The first NFT collection created entirely by AI in a community driven manner",
-    "image": "external-link-url/image.png",
+    "image": "https://gateway.pinata.cloud/ipfs/QmX2gq76sWRzqvBnRmJH7Zv5iMRv9x7GEQQFYc984BVXht",
     "external_link": "external-link-url",
     "seller_fee_basis_points": 100,
     "fee_recipient": "0xcEF789ec937B46dc82C8fB4E3E4bab3254651cEB"
