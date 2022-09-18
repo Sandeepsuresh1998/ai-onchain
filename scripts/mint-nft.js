@@ -4,10 +4,10 @@ const Web3 = require("web3")
 
 var web3 = new Web3(Web3.givenProvider)
 
-var raw_text = "Pikachu riding a waving with a thunderbolt";
+var raw_text = "Sandeep suresh as a baby on a carpet";
 var hash = web3.utils.sha3(raw_text)
+const mint_price = "0.05"
 
-console.log(hash);
 // Get Alchemy API Key
 const API_KEY = process.env.API_KEY;
 
@@ -15,7 +15,6 @@ const API_KEY = process.env.API_KEY;
 const provider = new ethers.providers.AlchemyProvider('goerli', API_KEY)
 
 //Get contract abi
-console.log("Getting contract")
 const contract = require("../artifacts/contracts/AINFT.sol/AINFT.json");
 
 // Create a signer
@@ -24,7 +23,7 @@ const signer = new ethers.Wallet(privateKey, provider)
 
 // Get contract ABI and address
 const abi = contract.abi
-const contractAddress =  "0x958F2B9A4dF5A3D8c3B53084CF018cAe6478C616"
+const contractAddress =  "0xC7E6AEb8265fcA30F842B6CaFDbe64E72Eb3CB46"
 
 // Create a contract instance
 const aiNFTContract = new ethers.Contract(contractAddress, abi, signer)
@@ -36,20 +35,14 @@ const tokenUri = "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9
 // Call mintNFT function
 const mintNFT = async () => {
     console.log(signer.address)
-    let nftTxn = await aiNFTContract.mintToken(signer.address, tokenUri, hash)
+    const options = {value: ethers.utils.parseEther(mint_price)}
+    let nftTxn = await aiNFTContract.mintToken(signer.address, tokenUri, hash, options)
     await nftTxn.wait()
     console.log(`Mint finished! Check it out at: https://goerli.etherscan.io/tx/${nftTxn.hash}`)
 }
 
-const checkRegistry = async (hashedTextId)  => {
-    console.log("calling check registry")
-    let hashExists = await aiNFTContract.checkIfTextIdExistsInRegistry(hashedTextId)
 
-    console.log(hashExists);
-}
-
-
-checkRegistry(hash)
+mintNFT(hash)
     .then(() => process.exit(0))
     .catch((error) => {
         console.error(error);
