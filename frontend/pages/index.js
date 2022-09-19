@@ -32,15 +32,24 @@ export default function Home() {
     }
   }
   return (
-    <div className={styles.container}>
+    <div class="bg-slate-800 flex flex-col h-screen justify-around">
+        <div id="header-container" class="flex flex-row justify-center">
+          <div id="header">
+            <h1 class="decoration-white text-4xl">
+              Mechanical Imagination
+            </h1>
+          </div>
+        </div>
+       
 
-      <main className={styles.main}>
-        <Head>
-          <h1 className={styles.title}>
-            Mechanical Imagination
-          </h1>
-        </Head>
-        <div>
+        <div class="flex flex-row justify-center">
+          <input>
+          
+          </input>
+        </div>
+        
+          
+        <div class="flex flex-row justify-center">
           {
             web3Provider == null ? (
               <button onClick={connectWallet}> Connect Wallet </button>
@@ -49,7 +58,6 @@ export default function Home() {
             )
           }
         </div>
-      </main>
     </div>
   )
 }
