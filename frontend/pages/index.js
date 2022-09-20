@@ -1,62 +1,40 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
 import React, {useState, useEffect} from 'react';
-import Web3Modal from "web3modal";
-import {ethers} from "ethers";
+import { 
+  useAccount,
+  useConnect,
+  useDisconnect,
+  useContractRead,
+  useContractWrite,
+} from 'wagmi'
+import { InjectedConnector } from 'wagmi/connectors/injected'
+import "@rainbow-me/rainbowkit/styles.css";
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 
-const providerOptions = {
-    
-}
 
 
 export default function Home() {
-  
-  const [web3Provider, setWeb3Provider] = useState(null);
+  const { address, isConnected } = useAccount()
+  const { connect } = useConnect({
+    connector: new InjectedConnector(),
+  })
+  const { disconnect } = useDisconnect()
 
-  async function connectWallet() {
-    try {
-      let web3modal = new Web3Modal(
-        {
-          cacheProvider: false,
-          providerOptions, 
-        }
-      );
-      const web3ModalInstance = await web3modal.connect();
-      const web3ModalProvider = new ethers.providers.Web3Provider(web3ModalInstance);
-      console.log(web3ModalProvider);
-      if (web3ModalProvider) {
-        setWeb3Provider(web3ModalProvider);
-      }
-    } catch(error) {
-      console.log(error);
-    }
-  }
   return (
     <div class="bg-slate-800 flex flex-col h-screen justify-around">
         <div id="header-container" class="flex flex-row justify-center">
-          <div id="header">
+          <div id="header" class="flex flex-col align-around">
             <h1 class="decoration-white text-4xl">
               Mechanical Imagination
             </h1>
-          </div>
-        </div>
-       
-
-        <div class="flex flex-row justify-center">
-          <input>
+            <input>
           
-          </input>
+            </input>
+          </div>
         </div>
         
           
         <div class="flex flex-row justify-center">
-          {
-            web3Provider == null ? (
-              <button onClick={connectWallet}> Connect Wallet </button>
-            ) : (
-              <p>Address : {web3Provider.provider.selectedAddress}</p>
-            )
-          }
+          <ConnectButton />
         </div>
     </div>
   )
