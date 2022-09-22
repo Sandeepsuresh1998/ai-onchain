@@ -4,7 +4,8 @@
   "description": "This repo contains an experiment to create an NFT marketplace that is only for AI art",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "generate-client": "openapi --input http://localhost:8000/openapi.json --output ./frontend/backend-client --client axios"
   },
   "repository": {
     "type": "git",
@@ -19,7 +20,8 @@
   "homepage": "https://github.com/Sandeepsuresh1998/ai-onchain#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
-    "hardhat": "^2.11.1"
+    "hardhat": "^2.11.1",
+    "openapi-typescript-codegen": "^0.23.0"
   },
   "dependencies": {
     "@ensdomains/eth-ens-namehash": "^2.0.15",
