@@ -10,6 +10,49 @@ import {
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import "@rainbow-me/rainbowkit/styles.css";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
+import {DefaultService} from "../backend-client";
+import {OpenAPI} from "../backend-client";
+
+OpenAPI.BASE = 'http://localhost:8000';
+
+class PromptForm extends React.Component {
+
+    constructor(props) {
+        super(props);
+        this.state = {value: '', imageUrl: ''};
+
+        this.handleChange = this.handleChange.bind(this);
+        this.handleSubmit = this.handleSubmit.bind(this);
+    }
+
+    handleChange(event) {
+        this.setState({value: event.target.value});
+    }
+
+    handleSubmit(event) {
+        DefaultService.stableDiffusionImg2TxtPost({prompt: this.state.value})
+            .then((result) =>
+                this.setState({imageUrl: result.image_uri})
+            )
+        event.preventDefault();
+    }
+
+    render() {
+        return (
+            <div>
+                <form onSubmit={this.handleSubmit}>
+                    <label>
+                        Enter Prompt:
+                        <input type="text" value={this.state.value} onChange={this.handleChange} />
+                    </label>
+                    <br/>
+                    <input type="submit" value="Generate Image" />
+                </form>
+                <img src={this.state.imageUrl} alt={"stable diffusion image."}/>
+            </div>
+        );
+    }
+}
 
 export default function Home() {
 
@@ -45,9 +88,7 @@ export default function Home() {
             <h1 class="decoration-white text-4xl">
               Mechanical Imagination
             </h1>
-            <input>
-                
-            </input>
+          <PromptForm/>
           </div>
         </div>
         
@@ -61,3 +102,4 @@ export default function Home() {
     </div>
   )
 }
+
