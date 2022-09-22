@@ -94,4 +94,11 @@ contract AINFT is ERC721URIStorage, Ownable {
     function getCurrentToken() public view returns (uint256) {
         return _tokenIds.current();
     }
+
+    function isTextMinted(bytes32 textId) public view returns (bool) {
+        if (registry[textId] == true) {
+            return true;
+        }
+        return false;
+    }
 }
