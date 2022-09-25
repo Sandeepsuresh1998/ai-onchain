@@ -1,8 +1,7 @@
-import '../styles/globals.css';
 import {
   ConnectButton,
   getDefaultWallets,
-  RainbowKitProvider
+  RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
 import { chain, configureChains, createClient, WagmiConfig } from "wagmi";
 import { alchemyProvider } from "wagmi/providers/alchemy";
@@ -15,13 +14,13 @@ const { chains, provider } = configureChains(
 
 const { connectors } = getDefaultWallets({
   appName: "AI NFT",
-  chains
+  chains,
 });
 
 const wagmiClient = createClient({
   autoConnect: true,
   connectors,
-  provider
+  provider,
 });
 
 function MyApp({ Component, pageProps }) {
