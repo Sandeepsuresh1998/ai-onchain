@@ -47,23 +47,7 @@ export default function Home() {
   const { connect } = useConnect({
     connector: new InjectedConnector(),
   });
-  const { disconnect } = useDisconnect();
-
-  const mintNFT = async (address, tokenURI, hash) => {
-    const response = await fetch(`${server}/api/mint`, {
-      method: "POST",
-      body: JSON.stringify({
-        address,
-        tokenURI,
-        hash,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data = await response.json();
-    console.log(data);
-  };
+  const { disconnect } = useDisconnect()
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -84,8 +68,20 @@ export default function Home() {
     }
   };
 
-  const handleMint = async () => {
-    alert("todo");
+  const handleMint = async (event) => {
+    // Pin image URL to IPFS
+    const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
+      image_uri: imageUrl,
+    });
+
+    // TODO: Construct metadata json
+
+    // TODO: Call api to pin metadata
+
+    // TODO: Call contract to mint NFT with now pinned tokenURI
+
+    // TODO: Set UI to successful minting page
+    
   };
 
   return (
@@ -114,7 +110,7 @@ export default function Home() {
               textShadow: "-3px -3px 0px #fff4, 4px 4px 0px #6a1b9af0",
             }}
           >
-            Imagination
+            Robot Dreams
           </Typography>
           <Paper elevation={2} sx={{ my: 2, overflow: "hidden" }}>
             <Box
