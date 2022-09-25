@@ -12,6 +12,7 @@ import "@rainbow-me/rainbowkit/styles.css";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import {DefaultService} from "../backend-client";
 import {OpenAPI} from "../backend-client";
+import text_to_hash from './util/text_to_hash';
 
 OpenAPI.BASE = 'http://localhost:8000';
 
@@ -30,11 +31,21 @@ class PromptForm extends React.Component {
     }
 
     handleSubmit(event) {
-        DefaultService.stableDiffusionImg2TxtPost({prompt: this.state.value})
-            .then((result) =>
-                this.setState({imageUrl: result.image_uri})
-            )
-        event.preventDefault();
+        // First check if hash is already taken
+        is_text_taken = fetch(`${server}/api/check_if_avaiable/${text_to_hash(this.state.value)}`, {
+          method: 'GET',
+        }).then(response => {
+          console.log(response)
+          if (response.is_available) {
+            DefaultService.stableDiffusionImg2TxtPost({prompt: this.state.value})
+                .then((result) =>
+                    this.setState({imageUrl: result.image_uri})
+                )
+            event.preventDefault();
+          }
+        })
+
+        
     }
 
     render() {
