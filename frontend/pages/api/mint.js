@@ -2,6 +2,7 @@ import { aiNFTContract as contract} from "../util/contract";
 const Web3 = require("web3")
 var web3 = new Web3(Web3.givenProvider)
 const ethers = require('ethers');
+import text_to_hash from "../util/text_to_hash";
 
 export default async function handler(req, res) {
 
@@ -9,27 +10,23 @@ export default async function handler(req, res) {
         return res.status(400).send("This is a POST");
     }
 
-    var address = req.body.address;
-    var tokenURI = req.body.tokenURI;
+    console.log(req.body)
 
-    // TODO: Replacing hashing of text on client_side, ideally would like to gate this with some validation as well
-    var raw_text = "Sandeep suresh as a baby on a carpet";
-    var hash = web3.utils.sha3(raw_text)
+    var address = req.body.address;
+    var tokenURI = req.body.metadataUrl;
+    var textInput = req.body.textInput;
+
+    var hash = text_to_hash(textInput)
     const mint_price = "0.05"
 
     // Redudant check if hash is already taken
     let isHashAlreadyTaken = await contract.isTextMinted(hash)
     if (isHashAlreadyTaken) {
-        console.log("Hash already taken")
         res.status(403).send("Hash already taken");
         return
     }
-    
-    // Get the NFT Metadata IPFS URL
-    const tokenUri = "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9FVC5aSQaXFKfVVYJb7"
-
     const options = {value: ethers.utils.parseEther(mint_price)}
-    let nftTxn = await contract.mintToken(address, tokenUri, hash, options)
+    let nftTxn = await contract.mintToken(address, tokenURI, hash, options)
     await nftTxn.wait()
 
     res.status(200).json({ 

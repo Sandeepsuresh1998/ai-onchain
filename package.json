@@ -20,6 +20,8 @@
   "homepage": "https://github.com/Sandeepsuresh1998/ai-onchain#readme",
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.1.1",
+    "ethers": "^5.7.1",
     "hardhat": "^2.11.1",
     "openapi-typescript-codegen": "^0.23.0"
   },

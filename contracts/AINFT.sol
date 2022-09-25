@@ -68,7 +68,7 @@ contract AINFT is ERC721URIStorage, Ownable {
         _safeMint(recipient, currentTokenId);
 
         // Set the tokenURI for the NFT
-        // TODO: tokenURI validation here (might be expensive)?
+        // TODO: tokenURI validation here (might be expensive)
         _setTokenURI(currentTokenId, tokenURI);
 
         // Transfer mint fee to wallet

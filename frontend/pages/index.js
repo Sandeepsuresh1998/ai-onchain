@@ -43,6 +43,7 @@ export default function Home() {
     "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9FVC5aSQaXFKfVVYJb7";
   const [imageUrl, setImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [textInput, setTextInput] = useState(null);
   const { address, isConnected } = useAccount();
   const { connect } = useConnect({
     connector: new InjectedConnector(),
@@ -52,6 +53,7 @@ export default function Home() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     const val = event.target.elements.prompt.value;
+    setTextInput(val.trim());
     if (!val) return;
 
     try {
@@ -69,16 +71,46 @@ export default function Home() {
   };
 
   const handleMint = async (event) => {
+
+    const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/"
+
     // Pin image URL to IPFS
     const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
       image_uri: imageUrl,
     });
 
+    // Remove ipfs://
+    var ipfsHash = imageRes.ipfs_uri.substring(7)
+    const ipfsImageUrl = baseIpfsUrl + ipfsHash
+
     // TODO: Construct metadata json
+    var metadata = {
+      "name": "Dream 323",
+      "description": textInput,
+      "image": ipfsImageUrl,
+    }
 
     // TODO: Call api to pin metadata
+    const metadataRes = await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
+      metadata: metadata,
+    })
+
+    const metadataUrl = baseIpfsUrl + metadataRes.ipfs_uri
 
     // TODO: Call contract to mint NFT with now pinned tokenURI
+    const response = await fetch(`${server}/api/mint`, {
+      method: "POST",
+      body: JSON.stringify({
+        address,
+        metadataUrl,
+        textInput,
+      }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    
+    console.log(response)
 
     // TODO: Set UI to successful minting page
     
@@ -153,7 +185,7 @@ export default function Home() {
             <Box mb={2} />
             {imageUrl && (
               <>
-                <Button variant="outlined">Mint</Button>
+                <Button onClick={handleMint}variant="outlined">Mint</Button>
                 <Box mb={2} />
               </>
             )}
