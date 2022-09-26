@@ -5,7 +5,9 @@ import {
   useConnect,
   useDisconnect,
   useContractRead,
+  usePrepareContractWrite,
   useContractWrite,
+  useSigner,
 } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import "@rainbow-me/rainbowkit/styles.css";
@@ -25,6 +27,8 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
+import text_to_hash from "./util/text_to_hash";
+const ethers = require('ethers');
 
 const darkTheme = createTheme({
   palette: {
@@ -39,21 +43,41 @@ const darkTheme = createTheme({
 OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
-  const TOKEN_URI =
-    "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9FVC5aSQaXFKfVVYJb7";
   const [imageUrl, setImageUrl] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
+  const [metadataUrl, setMetadataUrl] = useState(null);
+  const [textHash, setTextHash] = useState(null);
   const { address, isConnected } = useAccount();
+  const { data: signer, isError, signerIsLoading } = useSigner()
   const { connect } = useConnect({
     connector: new InjectedConnector(),
   });
   const { disconnect } = useDisconnect()
 
+  // TODO: This might break in deployment 
+  const contract = require("../../artifacts/contracts/AINFT.sol/AINFT.json");
+  const { config } = usePrepareContractWrite({
+    addressOrName: '0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661',
+    contractInterface: contract.abi,
+    functionName: 'mintToken',
+    signerOrProvider: signer,
+    args: [
+        address,
+        metadataUrl,
+        textHash,
+    ],
+    overrides: {
+      value: ethers.utils.parseEther('0.05')
+    }
+  })
+
+  const { data, isMinting, isSuccess, write } = useContractWrite(config)
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const val = event.target.elements.prompt.value;
-    setTextInput(val.trim());
+    const val = event.target.elements.prompt.value.trim();
+    setTextInput(val);
     if (!val) return;
 
     try {
@@ -83,37 +107,42 @@ export default function Home() {
     var ipfsHash = imageRes.ipfs_uri.substring(7)
     const ipfsImageUrl = baseIpfsUrl + ipfsHash
 
-    // TODO: Construct metadata json
+    // Construct metadata json
+    // TODO: Add token id to name, this might have some race conditions
+    // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
     var metadata = {
-      "name": "Dream 323",
-      "description": textInput,
+      "name": "Dream # 323",
+      "description": val,
       "image": ipfsImageUrl,
     }
 
-    // TODO: Call api to pin metadata
+    // Call api to pin metadata
     const metadataRes = await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
       metadata: metadata,
     })
 
-    const metadataUrl = baseIpfsUrl + metadataRes.ipfs_uri
-
-    // TODO: Call contract to mint NFT with now pinned tokenURI
-    const response = await fetch(`${server}/api/mint`, {
-      method: "POST",
-      body: JSON.stringify({
-        address,
-        metadataUrl,
-        textInput,
-      }),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    // Setting necessary components to state
+    setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri)
+    setTextHash(text_to_hash(textInput))
     
-    console.log(response)
-
-    // TODO: Set UI to successful minting page
+    // // TODO: Call contract to mint NFT with now pinned tokenURI
+    // const response = await fetch(`${server}/api/mint`, {
+    //   method: "POST",
+    //   body: JSON.stringify({
+    //     address,
+    //     metadataUrl,
+    //     textInput,
+    //   }),
+    //   headers: {
+    //     "Content-Type": "application/json",
+    //   },
+    // });
     
+    // console.log(response)
+
+    // TODO: Call contract using wagmi and signer given from the constructor
+
+    // TODO: Set UI to successful minting page    
   };
 
   return (
@@ -142,7 +171,7 @@ export default function Home() {
               textShadow: "-3px -3px 0px #fff4, 4px 4px 0px #6a1b9af0",
             }}
           >
-            Robot Dreams
+            Synthetic Dreams
           </Typography>
           <Paper elevation={2} sx={{ my: 2, overflow: "hidden" }}>
             <Box
