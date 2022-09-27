@@ -61,7 +61,6 @@ export default function Home() {
     addressOrName: '0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661',
     contractInterface: contract.abi,
     functionName: 'mintToken',
-    signerOrProvider: signer,
     args: [
         address,
         metadataUrl,
@@ -72,7 +71,7 @@ export default function Home() {
     }
   })
 
-  const { writeAsync } = useContractWrite(config)
+  const contractWrite = useContractWrite(config)
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -125,25 +124,7 @@ export default function Home() {
     setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri)
     setTextHash(text_to_hash(textInput))
 
-    // await writeAsync()
-    
-    // // TODO: Call contract to mint NFT with now pinned tokenURI
-    // const response = await fetch(`${server}/api/mint`, {
-    //   method: "POST",
-    //   body: JSON.stringify({
-    //     address,
-    //     metadataUrl,
-    //     textInput,
-    //   }),
-    //   headers: {
-    //     "Content-Type": "application/json",
-    //   },
-    // });
-    
-    // console.log(response)
-
-    // TODO: Call contract using wagmi and signer given from the constructor
-
+    await contractWrite.write()
     // TODO: Set UI to successful minting page    
   };
 
