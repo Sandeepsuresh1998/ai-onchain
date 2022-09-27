@@ -72,7 +72,7 @@ export default function Home() {
     }
   })
 
-  const { data, isMinting, isSuccess, write } = useContractWrite(config)
+  const { writeAsync } = useContractWrite(config)
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -112,7 +112,7 @@ export default function Home() {
     // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
     var metadata = {
       "name": "Dream # 323",
-      "description": val,
+      "description": textInput,
       "image": ipfsImageUrl,
     }
 
@@ -124,6 +124,8 @@ export default function Home() {
     // Setting necessary components to state
     setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri)
     setTextHash(text_to_hash(textInput))
+
+    // await writeAsync()
     
     // // TODO: Call contract to mint NFT with now pinned tokenURI
     // const response = await fetch(`${server}/api/mint`, {
