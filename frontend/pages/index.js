@@ -44,7 +44,7 @@ OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isImageLoading, setIsLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
   const [metadataUrl, setMetadataUrl] = useState(null);
   const [textHash, setTextHash] = useState(null);
@@ -71,7 +71,7 @@ export default function Home() {
     }
   })
 
-  const contractWrite = useContractWrite(config)
+  const { data, error, isLoading , isSuccess, write } = useContractWrite(config)
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -124,7 +124,7 @@ export default function Home() {
     setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri)
     setTextHash(text_to_hash(textInput))
 
-    await contractWrite.write()
+    await write?.()
     // TODO: Set UI to successful minting page    
   };
 
@@ -173,7 +173,7 @@ export default function Home() {
                   alt={"stable diffusion image."}
                 />
               )}
-              {!isLoading && !imageUrl && (
+              {!isImageLoading && !imageUrl && (
                 <ImageSearchIcon sx={{ fontSize: "5rem" }} />
               )}
             </Box>
