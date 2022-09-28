@@ -28,6 +28,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import text_to_hash from "./util/text_to_hash";
+import Script from 'next/script'
 const ethers = require('ethers');
 
 const darkTheme = createTheme({
@@ -82,6 +83,7 @@ export default function Home() {
     try {
       setIsLoading(true);
       setImageUrl(null);
+
       const res = await DefaultService.stableDiffusionImg2TxtPost({
         prompt: val,
       });
@@ -102,27 +104,27 @@ export default function Home() {
       image_uri: imageUrl,
     });
 
-    // Remove ipfs://
-    var ipfsHash = imageRes.ipfs_uri.substring(7)
-    const ipfsImageUrl = baseIpfsUrl + ipfsHash
-
+    // Remove ipfs:// and add gateway
+    const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl)
+    const hashedText = text_to_hash(textInput)
+    setTextHash(hashedText)
+    
     // Construct metadata json
-    // TODO: Add token id to name, this might have some race conditions
     // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
     var metadata = {
-      "name": "Dream # 323",
+      "name": `Dream: ${hashedText.substring(0,4)}`,
       "description": textInput,
       "image": ipfsImageUrl,
     }
-
+    
     // Call api to pin metadata
     const metadataRes = await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
       metadata: metadata,
     })
 
-    // Setting necessary components to state
+
     setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri)
-    setTextHash(text_to_hash(textInput))
+
 
     await write?.()
     // TODO: Set UI to successful minting page    
