@@ -7,20 +7,19 @@ import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AINFT is ERC721URIStorage, Ownable {
+contract SyntheticDreams is ERC721URIStorage, Ownable {
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
-    Counters.Counter private _itemsSold;
 
     uint256 MINT_PRICE = 0.05 ether;
     uint256 LIST_PRICE = 0.01 ether;
 
-    uint256 MAX_AI_SUPPLY = 10000;
+    uint256 MAX_SUPPLY = 10000;
     uint256 MAX_MINTS = 5;
 
     //Owner of the contract is the one who deploys it 
-    constructor() ERC721("AINFT", "AINFT") {}
+    constructor() ERC721("Synthetic Dreams", "SD") {}
 
     // Registry that holds all unique text ids 
     mapping(bytes32 => bool) internal registry;
@@ -57,7 +56,7 @@ contract AINFT is ERC721URIStorage, Ownable {
         // Set the id of the newly minted nft to this
         uint256 currentTokenId = _tokenIds.current();
 
-        if (currentTokenId > MAX_AI_SUPPLY) {
+        if (currentTokenId > MAX_SUPPLY) {
             revert("This NFT project has been sold out");
         }
 

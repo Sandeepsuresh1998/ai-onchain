@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import Particles from "react-particles";
+import { loadFull } from "tsparticles";
 import { server } from "../config";
 import {
   useAccount,
@@ -28,7 +30,6 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import text_to_hash from "./util/text_to_hash";
-import Script from 'next/script'
 const ethers = require('ethers');
 
 const darkTheme = createTheme({
@@ -44,6 +45,8 @@ const darkTheme = createTheme({
 OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
+
+
   const [imageUrl, setImageUrl] = useState(null);
   const [isImageLoading, setIsLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
@@ -56,8 +59,20 @@ export default function Home() {
   });
   const { disconnect } = useDisconnect()
 
+  const particlesInit = useCallback(async (engine) => {
+    console.log(engine);
+    // you can initiate the tsParticles instance (engine) here, adding custom shapes or presets
+    // this loads the tsparticles package bundle, it's the easiest method for getting everything ready
+    // starting from v2 you can add only the features you need reducing the bundle size
+    await loadFull(engine);
+  }, []);
+
+  const particlesLoaded = useCallback(async (container) => {
+    await console.log(container);
+  }, []);
+
   // TODO: This might break in deployment 
-  const contract = require("../../artifacts/contracts/AINFT.sol/AINFT.json");
+  const contract = require("../../artifacts/contracts/AINFT.sol/SyntheticDreams.json");
   const { config } = usePrepareContractWrite({
     addressOrName: '0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661',
     contractInterface: contract.abi,
@@ -131,7 +146,86 @@ export default function Home() {
   };
 
   return (
+    
     <ThemeProvider theme={darkTheme}>
+    <Particles
+      id="tsparticles"
+      init={particlesInit}
+      loaded={particlesLoaded}
+      options={{
+        background: {
+          color: {
+            value: "#000000",
+          },
+        },
+        fpsLimit: 120,
+        interactivity: {
+          detect_on: 'window',
+          events: {
+            onClick: {
+              enable: true,
+              mode: "push",
+            },
+            onHover: {
+              enable: true,
+              mode: "repulse",
+            },
+            resize: true,
+          },
+          modes: {
+            push: {
+              quantity: 4,
+            },
+            repulse: {
+              distance: 200,
+              duration: 0.4,
+            },
+          },
+        },
+        particles: {
+          color: {
+            value: "#ffffff",
+          },
+          links: {
+            color: "#ffffff",
+            distance: 150,
+            enable: true,
+            opacity: 0.5,
+            width: 1,
+          },
+          collisions: {
+            enable: true,
+          },
+          move: {
+            directions: "none",
+            enable: true,
+            outModes: {
+              default: "bounce",
+            },
+            random: false,
+            speed: 4,
+            straight: false,
+          },
+          number: {
+            density: {
+              enable: true,
+              area: 800,
+            },
+            value: 80,
+          },
+          opacity: {
+            value: 0.5,
+          },
+          shape: {
+            type: "circle",
+          },
+          size: {
+            value: { min: 1, max: 5 },
+          },
+        },
+        detectRetina: true,
+      }}
+    />
       <CssBaseline />
       <div
         style={{
@@ -190,7 +284,7 @@ export default function Home() {
               name="prompt"
               size="small"
               label="Image Prompt"
-              placeholder="cool dog in style of cave painting"
+              placeholder="a golden retriever in the style of a cave painting"
             />
             <Box mb={2} />
             <Button type="submit" variant="contained">
