@@ -30,7 +30,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import text_to_hash from "./util/text_to_hash";
-const ethers = require('ethers');
+const ethers = require("ethers");
 
 const darkTheme = createTheme({
   palette: {
@@ -44,20 +44,20 @@ const darkTheme = createTheme({
 
 OpenAPI.BASE = "http://localhost:8000";
 
+const contract = {}; // require("../../artifacts/contracts/AINFT.sol/SyntheticDreams.json");
+
 export default function Home() {
-
-
   const [imageUrl, setImageUrl] = useState(null);
   const [isImageLoading, setIsLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
   const [metadataUrl, setMetadataUrl] = useState(null);
   const [textHash, setTextHash] = useState(null);
   const { address, isConnected } = useAccount();
-  const { data: signer, isError, signerIsLoading } = useSigner()
+  const { data: signer, isError, signerIsLoading } = useSigner();
   const { connect } = useConnect({
     connector: new InjectedConnector(),
   });
-  const { disconnect } = useDisconnect()
+  const { disconnect } = useDisconnect();
 
   const particlesInit = useCallback(async (engine) => {
     console.log(engine);
@@ -71,23 +71,19 @@ export default function Home() {
     await console.log(container);
   }, []);
 
-  // TODO: This might break in deployment 
-  const contract = require("../../artifacts/contracts/AINFT.sol/SyntheticDreams.json");
-  const { config } = usePrepareContractWrite({
-    addressOrName: '0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661',
-    contractInterface: contract.abi,
-    functionName: 'mintToken',
-    args: [
-        address,
-        metadataUrl,
-        textHash,
-    ],
-    overrides: {
-      value: ethers.utils.parseEther('0.05')
-    }
-  })
+  // TODO: This might break in deployment
 
-  const { data, error, isLoading , isSuccess, write } = useContractWrite(config)
+  const { config } = usePrepareContractWrite({
+    addressOrName: "0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661",
+    contractInterface: contract.abi,
+    functionName: "mintToken",
+    args: [address, metadataUrl, textHash],
+    overrides: {
+      value: ethers.utils.parseEther("0.05"),
+    },
+  });
+
+  const { data, error, isLoading, isSuccess, write } = useContractWrite(config);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -111,8 +107,7 @@ export default function Home() {
   };
 
   const handleMint = async (event) => {
-
-    const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/"
+    const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
 
     // Pin image URL to IPFS
     const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
@@ -120,112 +115,117 @@ export default function Home() {
     });
 
     // Remove ipfs:// and add gateway
-    const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl)
-    const hashedText = text_to_hash(textInput)
-    setTextHash(hashedText)
-    
+    const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
+    const hashedText = text_to_hash(textInput);
+    setTextHash(hashedText);
+
     // Construct metadata json
     // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
     var metadata = {
-      "name": `Dream: ${hashedText.substring(0,4)}`,
-      "description": textInput,
-      "image": ipfsImageUrl,
-    }
-    
+      name: `Dream: ${hashedText.substring(0, 4)}`,
+      description: textInput,
+      image: ipfsImageUrl,
+    };
+
     // Call api to pin metadata
-    const metadataRes = await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
-      metadata: metadata,
-    })
+    const metadataRes =
+      await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
+        metadata: metadata,
+      });
 
+    setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri);
 
-    setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri)
-
-
-    await write?.()
-    // TODO: Set UI to successful minting page    
+    await write?.();
+    // TODO: Set UI to successful minting page
   };
 
   return (
-    
     <ThemeProvider theme={darkTheme}>
-    <Particles
-      id="tsparticles"
-      init={particlesInit}
-      loaded={particlesLoaded}
-      options={{
-        background: {
-          color: {
-            value: "#000000",
-          },
-        },
-        fpsLimit: 120,
-        interactivity: {
-          detect_on: 'window',
-          events: {
-            onClick: {
-              enable: true,
-              mode: "push",
+      <div
+        style={{
+          position: "relative",
+          zIndex: "-1",
+        }}
+      >
+        <Particles
+          id="tsparticles"
+          init={particlesInit}
+          loaded={particlesLoaded}
+          options={{
+            background: {
+              color: {
+                value: "#000",
+              },
             },
-            onHover: {
-              enable: true,
-              mode: "repulse",
+            fpsLimit: 120,
+            interactivity: {
+              detect_on: "window",
+              events: {
+                // onClick: {
+                //   enable: true,
+                //   mode: "push",
+                // },
+                // onHover: {
+                //   enable: true,
+                //   mode: "repulse",
+                // },
+                resize: true,
+              },
+              modes: {
+                push: {
+                  quantity: 4,
+                },
+                repulse: {
+                  distance: 200,
+                  duration: 0.4,
+                },
+              },
             },
-            resize: true,
-          },
-          modes: {
-            push: {
-              quantity: 4,
+            particles: {
+              color: {
+                value: "#fff4",
+              },
+              links: {
+                color: "#6a1b9a40",
+                distance: 150,
+                enable: true,
+                opacity: 0.5,
+                width: 1,
+              },
+              // collisions: {
+              //   enable: true,
+              // },
+              move: {
+                directions: "none",
+                enable: true,
+                outModes: {
+                  default: "bounce",
+                },
+                random: false,
+                speed: 3,
+                straight: false,
+              },
+              number: {
+                density: {
+                  enable: true,
+                  area: 800,
+                },
+                value: 80,
+              },
+              opacity: {
+                value: 0.5,
+              },
+              shape: {
+                type: "circle",
+              },
+              size: {
+                value: { min: 1, max: 5 },
+              },
             },
-            repulse: {
-              distance: 200,
-              duration: 0.4,
-            },
-          },
-        },
-        particles: {
-          color: {
-            value: "#ffffff",
-          },
-          links: {
-            color: "#ffffff",
-            distance: 150,
-            enable: true,
-            opacity: 0.5,
-            width: 1,
-          },
-          collisions: {
-            enable: true,
-          },
-          move: {
-            directions: "none",
-            enable: true,
-            outModes: {
-              default: "bounce",
-            },
-            random: false,
-            speed: 4,
-            straight: false,
-          },
-          number: {
-            density: {
-              enable: true,
-              area: 800,
-            },
-            value: 80,
-          },
-          opacity: {
-            value: 0.5,
-          },
-          shape: {
-            type: "circle",
-          },
-          size: {
-            value: { min: 1, max: 5 },
-          },
-        },
-        detectRetina: true,
-      }}
-    />
+            detectRetina: true,
+          }}
+        />
+      </div>
       <CssBaseline />
       <div
         style={{
@@ -293,7 +293,9 @@ export default function Home() {
             <Box mb={2} />
             {imageUrl && (
               <>
-                <Button onClick={handleMint}variant="outlined">Mint</Button>
+                <Button onClick={handleMint} variant="outlined">
+                  Mint
+                </Button>
                 <Box mb={2} />
               </>
             )}
