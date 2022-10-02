@@ -44,7 +44,7 @@ const darkTheme = createTheme({
 
 OpenAPI.BASE = "http://localhost:8000";
 
-const contract = {}; // require("../../artifacts/contracts/AINFT.sol/SyntheticDreams.json");
+const contract = require("./config/SyntheticDreams.json");
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState(null);
@@ -161,14 +161,10 @@ export default function Home() {
             interactivity: {
               detect_on: "window",
               events: {
-                // onClick: {
-                //   enable: true,
-                //   mode: "push",
-                // },
-                // onHover: {
-                //   enable: true,
-                //   mode: "repulse",
-                // },
+                onHover: {
+                  enable: true,
+                  mode: "repulse",
+                },
                 resize: true,
               },
               modes: {
@@ -192,9 +188,6 @@ export default function Home() {
                 opacity: 0.5,
                 width: 1,
               },
-              // collisions: {
-              //   enable: true,
-              // },
               move: {
                 directions: "none",
                 enable: true,

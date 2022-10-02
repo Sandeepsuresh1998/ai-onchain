@@ -1,6 +1,4 @@
 const ethers = require('ethers');
-const Web3 = require("web3")
-var web3 = new Web3(Web3.givenProvider)
 require("dotenv").config()
 
 // Get Alchemy API Key
@@ -8,7 +6,7 @@ const API_KEY = process.env.API_KEY;
 // Define an Alchemy Provider
 const provider = new ethers.providers.AlchemyProvider('goerli', API_KEY)
 //Get contract abi
-const contract = require("../../../artifacts/contracts/AINFT.sol/AINFT.json");
+const contract = require("../config/SyntheticDreams.json");
 // Create a signer
 const privateKey = process.env.PRIVATE_KEY
 const signer = new ethers.Wallet(privateKey, provider)
