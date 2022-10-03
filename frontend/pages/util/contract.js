@@ -1,5 +1,4 @@
 const ethers = require('ethers');
-require("dotenv").config()
 
 // Get Alchemy API Key
 const API_KEY = process.env.API_KEY;
