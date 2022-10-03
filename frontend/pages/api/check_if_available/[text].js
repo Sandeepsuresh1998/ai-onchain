@@ -1,5 +1,5 @@
-import { aiNFTContract as contract} from "../../util/contract";
-import text_to_hash from "../../util/text_to_hash";
+import { aiNFTContract as contract} from "../../../util/contract";
+import text_to_hash from "../../../util/text_to_hash";
 
 
 export default async function handler(req, res) {

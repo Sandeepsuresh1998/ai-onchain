@@ -44,8 +44,6 @@ const darkTheme = createTheme({
 
 OpenAPI.BASE = "http://localhost:8000";
 
-const contract = require("./config/SyntheticDreams.json");
-
 export default function Home() {
   const [imageUrl, setImageUrl] = useState(null);
   const [isImageLoading, setIsLoading] = useState(false);
@@ -72,6 +70,8 @@ export default function Home() {
   }, []);
 
   // TODO: This might break in deployment
+
+  const contract = require("../util/SyntheticDreams.json");
 
   const { config } = usePrepareContractWrite({
     addressOrName: "0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661",
