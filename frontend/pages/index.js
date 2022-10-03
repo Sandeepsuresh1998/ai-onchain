@@ -29,7 +29,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
-import text_to_hash from "./util/text_to_hash";
+import text_to_hash from "../util/text_to_hash"
 const ethers = require("ethers");
 
 const darkTheme = createTheme({
