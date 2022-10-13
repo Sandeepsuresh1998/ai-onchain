@@ -68,13 +68,10 @@ export default function Home() {
   const particlesLoaded = useCallback(async (container) => {
     await console.log(container);
   }, []);
-
-  // TODO: This might break in deployment
-
   const contract = require("../util/SyntheticDreams.json");
 
   const { config } = usePrepareContractWrite({
-    addressOrName: "0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661",
+    addressOrName: process.env.CONTRACT_ADDRESS,
     contractInterface: contract.abi,
     functionName: "mintToken",
     args: [address, metadataUrl, textHash],
@@ -107,6 +104,10 @@ export default function Home() {
   };
 
   const handleMint = async (event) => {
+
+    // TODO: Create check that texted input is not taken
+    // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
+
     const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
 
     // Pin image URL to IPFS

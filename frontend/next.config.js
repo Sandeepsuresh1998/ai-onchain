@@ -6,6 +6,7 @@ const nextConfig = {
     API_URL: process.env.API_URL,
     PRIVATE_KEY: process.env.PRIVATE_KEY,
     API_KEY: process.env.API_KEY,
+    CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS,
   }
 }
 

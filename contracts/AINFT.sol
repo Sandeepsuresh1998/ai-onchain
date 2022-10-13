@@ -18,6 +18,9 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     uint256 MAX_SUPPLY = 10000;
     uint256 MAX_MINTS = 5;
 
+    // Default contract URI
+    string CONTRACT_URI = "https://gateway.pinata.cloud/ipfs/QmYiDdgY7Nxsf3fNnCUWNHVtn2fmSBMYYr1QxNS8c5ehEW";
+
     //Owner of the contract is the one who deploys it 
     constructor() ERC721("Synthetic Dreams", "SD") {}
 
@@ -30,10 +33,13 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     //Mapping of number of mints for an address
     mapping(address => uint) public walletMints;
 
-    function contractURI() public pure returns (string memory) {
-        return "https://gateway.pinata.cloud/ipfs/QmYiDdgY7Nxsf3fNnCUWNHVtn2fmSBMYYr1QxNS8c5ehEW";
+    function contractURI() public view returns (string memory) {
+        return CONTRACT_URI;
     }
 
+    function changeContractURI(string memory newURI) public onlyOwner {
+        CONTRACT_URI = newURI;
+    }   
     /*
         Function to mint the NFT
         params:

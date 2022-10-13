@@ -11,7 +11,7 @@ const privateKey = process.env.PRIVATE_KEY
 const signer = new ethers.Wallet(privateKey, provider)
 // Get contract ABI and address
 const abi = contract.abi
-const contractAddress =  "0x724e0AEcf6Cf6c0f883581609500A9Fd1Afd2661"
+const contractAddress =  process.env.CONTRACT_ADDRESS
 
 // Create a contract instance
 export const aiNFTContract = new ethers.Contract(contractAddress, abi, signer)
