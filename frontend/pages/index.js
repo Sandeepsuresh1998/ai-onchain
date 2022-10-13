@@ -96,7 +96,7 @@ export default function Home() {
       const res = await DefaultService.stableDiffusionImg2TxtPost({
         prompt: val,
       });
-      setImageUrl(res.image_uri[0]);
+      setImageUrl(res.image_uris[0]);
     } catch (e) {
       console.log(e);
     } finally {
