@@ -42,7 +42,7 @@ const darkTheme = createTheme({
   },
 });
 
-OpenAPI.BASE = process.env.SERVER_URL | "http://localhost:8000";
+OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState(null);
