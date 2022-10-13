@@ -30,6 +30,7 @@ export class DefaultService {
             body: requestBody,
             mediaType: 'application/json',
             errors: {
+                400: `Bad Request`,
                 422: `Validation Error`,
             },
         });

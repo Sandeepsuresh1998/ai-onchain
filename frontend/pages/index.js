@@ -32,6 +32,7 @@ import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import text_to_hash from "../util/text_to_hash"
 const ethers = require("ethers");
 
+
 const darkTheme = createTheme({
   palette: {
     primary: {
@@ -95,7 +96,7 @@ export default function Home() {
       const res = await DefaultService.stableDiffusionImg2TxtPost({
         prompt: val,
       });
-      setImageUrl(res.image_uri);
+      setImageUrl(res.image_uri[0]);
     } catch (e) {
       console.log(e);
     } finally {

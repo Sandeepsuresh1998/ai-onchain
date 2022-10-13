@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type ImageToTextResponse = {
-    image_uris: Array<string>;
+export type ErrorResponse = {
+    message: string;
 };
 

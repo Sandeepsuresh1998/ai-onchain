@@ -6,6 +6,7 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export type { ErrorResponse } from './models/ErrorResponse';
 export type { HTTPValidationError } from './models/HTTPValidationError';
 export type { ImageToTextRequest } from './models/ImageToTextRequest';
 export type { ImageToTextResponse } from './models/ImageToTextResponse';

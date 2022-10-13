@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "generate-client": "openapi --input http://localhost:8000/openapi.json --output ./frontend/backend-client --client axios"
+    "generate-client-remote": "openapi --input https://txt2img-api.vercel.app/openapi.json --output ./frontend/backend-client --client axios",
+    "generate-client": "openapi --input http://localhost:8080/openapi.json --output ./frontend/backend-client --client axios"
   },
   "repository": {
     "type": "git",
