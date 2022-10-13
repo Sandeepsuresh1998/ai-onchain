@@ -43,7 +43,7 @@ const darkTheme = createTheme({
   },
 });
 
-OpenAPI.BASE = process.env.SERVER_URL | "http://localhost:8000";
+OpenAPI.BASE = "https://txt2img-api.vercel.app";
 
 export default function Home() {
   const [imageUrl, setImageUrl] = useState(null);
