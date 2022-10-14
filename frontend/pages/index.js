@@ -24,14 +24,16 @@ import {
   TextField,
   Button,
   Paper,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
-import text_to_hash from "../util/text_to_hash"
+import text_to_hash from "../util/text_to_hash";
+import contract from "../util/SyntheticDreams.json";
 const ethers = require("ethers");
-
 
 const darkTheme = createTheme({
   palette: {
@@ -46,6 +48,10 @@ const darkTheme = createTheme({
 OpenAPI.BASE = "https://txt2img-api.vercel.app";
 
 export default function Home() {
+  const [alert, setAlert] = useState({
+    msg: "",
+    type: "success",
+  });
   const [imageUrl, setImageUrl] = useState(null);
   const [isImageLoading, setIsLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
@@ -57,19 +63,6 @@ export default function Home() {
     connector: new InjectedConnector(),
   });
   const { disconnect } = useDisconnect();
-
-  const particlesInit = useCallback(async (engine) => {
-    console.log(engine);
-    // you can initiate the tsParticles instance (engine) here, adding custom shapes or presets
-    // this loads the tsparticles package bundle, it's the easiest method for getting everything ready
-    // starting from v2 you can add only the features you need reducing the bundle size
-    await loadFull(engine);
-  }, []);
-
-  const particlesLoaded = useCallback(async (container) => {
-    await console.log(container);
-  }, []);
-  const contract = require("../util/SyntheticDreams.json");
 
   const { config } = usePrepareContractWrite({
     addressOrName: process.env.CONTRACT_ADDRESS,
@@ -97,156 +90,84 @@ export default function Home() {
         prompt: val,
       });
       setImageUrl(res.image_uris[0]);
+      setAlert({
+        msg: "dreaming complete",
+      });
     } catch (e) {
       console.log(e);
+      setAlert({
+        msg: "Bug in the dream code.",
+        type: "error",
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleMint = async (event) => {
-
+    event.preventDefault();
     // TODO: Create check that texted input is not taken
     // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
 
     const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
-
-    // Pin image URL to IPFS
-    const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
-      image_uri: imageUrl,
-    });
-
-    // Remove ipfs:// and add gateway
-    const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
-    const hashedText = text_to_hash(textInput);
-    setTextHash(hashedText);
-
-    // Construct metadata json
-    // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
-    var metadata = {
-      name: `Dream: ${hashedText.substring(0, 4)}`,
-      description: textInput,
-      image: ipfsImageUrl,
-    };
-
-    // Call api to pin metadata
-    const metadataRes =
-      await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
-        metadata: metadata,
+    setIsLoading(true);
+    try {
+      const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
+        image_uri: imageUrl,
       });
 
-    setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri);
+      const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
+      const hashedText = text_to_hash(textInput);
+      setTextHash(hashedText);
 
-    await write?.();
-    // TODO: Set UI to successful minting page
+      // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
+      var metadata = {
+        name: `Dream: ${hashedText.substring(0, 4)}`,
+        description: textInput,
+        image: ipfsImageUrl,
+      };
+
+      // Call api to pin metadata
+      const metadataRes =
+        await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
+          metadata: metadata,
+        });
+
+      setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri);
+
+      await write?.();
+      // TODO: Set UI to successful minting page
+      setAlert({
+        msg: "Minted!",
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <ThemeProvider theme={darkTheme}>
-      <div
-        style={{
-          position: "relative",
-          zIndex: "-1",
-        }}
-      >
-        <Particles
-          id="tsparticles"
-          init={particlesInit}
-          loaded={particlesLoaded}
-          options={{
-            background: {
-              color: {
-                value: "#000",
-              },
-            },
-            fpsLimit: 120,
-            interactivity: {
-              detect_on: "window",
-              events: {
-                onHover: {
-                  enable: true,
-                  mode: "repulse",
-                },
-                resize: true,
-              },
-              modes: {
-                push: {
-                  quantity: 4,
-                },
-                repulse: {
-                  distance: 200,
-                  duration: 0.4,
-                },
-              },
-            },
-            particles: {
-              color: {
-                value: "#fff4",
-              },
-              links: {
-                color: "#6a1b9a40",
-                distance: 150,
-                enable: true,
-                opacity: 0.5,
-                width: 1,
-              },
-              move: {
-                directions: "none",
-                enable: true,
-                outModes: {
-                  default: "bounce",
-                },
-                random: false,
-                speed: 3,
-                straight: false,
-              },
-              number: {
-                density: {
-                  enable: true,
-                  area: 800,
-                },
-                value: 80,
-              },
-              opacity: {
-                value: 0.5,
-              },
-              shape: {
-                type: "circle",
-              },
-              size: {
-                value: { min: 1, max: 5 },
-              },
-            },
-            detectRetina: true,
-          }}
-        />
-      </div>
       <CssBaseline />
+      <TsParticles />
+      <Snackbar
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        open={!!alert.msg}
+        onClose={() => setAlert({})}
+      >
+        <Alert severity={alert.type || "success"} sx={{ width: "100%" }}>
+          {alert.msg}
+        </Alert>
+      </Snackbar>
       <div
         style={{
           height: "100vh",
           width: "100vw",
         }}
       >
-        <Box
-          padding={2}
-          pt={[2, 6]}
-          justifyContent="center"
-          alignItems="center"
-          textAlign="center"
-          maxWidth="600px"
-          mx="auto"
-        >
-          <Typography
-            textTransform="uppercase"
-            variant="h3"
-            sx={{
-              letterSpacing: ["2px", "8px"],
-              textShadow: "-3px -3px 0px #fff4, 4px 4px 0px #6a1b9af0",
-            }}
-          >
-            Synthetic Dreams
-          </Typography>
+        <AppContainer>
+          <AppTitle>Synthetic Dreams</AppTitle>
           <Paper elevation={2} sx={{ my: 2, overflow: "hidden" }}>
             <Box
               minHeight="30vh"
@@ -274,6 +195,9 @@ export default function Home() {
             onSubmit={handleSubmit}
             display="flex"
             flexDirection="column"
+            sx={{
+              background: "#000",
+            }}
           >
             <TextField
               name="prompt"
@@ -311,8 +235,120 @@ export default function Home() {
               <ConnectButton />
             </Box>
           </Box>
-        </Box>
+        </AppContainer>
       </div>
     </ThemeProvider>
   );
 }
+
+const AppTitle = ({ children }) => (
+  <Typography
+    textTransform="uppercase"
+    variant="h3"
+    sx={{
+      letterSpacing: ["2px", "8px"],
+      textShadow: "-3px -3px 0px #fff4, 4px 4px 0px #6a1b9af0",
+    }}
+  >
+    {children}
+  </Typography>
+);
+
+const AppContainer = ({ children }) => (
+  <Box
+    padding={[2, 6]}
+    justifyContent="center"
+    alignItems="center"
+    textAlign="center"
+    maxWidth="600px"
+    mx="auto"
+  >
+    {children}
+  </Box>
+);
+
+const TsParticles = () => {
+  const particlesInit = useCallback(async (engine) => {
+    await loadFull(engine);
+  }, []);
+
+  return (
+    <div
+      style={{
+        position: "relative",
+        zIndex: "-1",
+      }}
+    >
+      <Particles
+        id="tsparticles"
+        init={particlesInit}
+        options={{
+          background: {
+            color: {
+              value: "#000",
+            },
+          },
+          fpsLimit: 120,
+          interactivity: {
+            detect_on: "window",
+            events: {
+              onHover: {
+                enable: true,
+                mode: "repulse",
+              },
+              resize: true,
+            },
+            modes: {
+              push: {
+                quantity: 4,
+              },
+              repulse: {
+                distance: 200,
+                duration: 0.4,
+              },
+            },
+          },
+          particles: {
+            color: {
+              value: "#fff4",
+            },
+            links: {
+              color: "#6a1b9a40",
+              distance: 150,
+              enable: true,
+              opacity: 0.5,
+              width: 1,
+            },
+            move: {
+              directions: "none",
+              enable: true,
+              outModes: {
+                default: "bounce",
+              },
+              random: false,
+              speed: 3,
+              straight: false,
+            },
+            number: {
+              density: {
+                enable: true,
+                area: 800,
+              },
+              value: 80,
+            },
+            opacity: {
+              value: 0.5,
+            },
+            shape: {
+              type: "circle",
+            },
+            size: {
+              value: { min: 1, max: 5 },
+            },
+          },
+          detectRetina: true,
+        }}
+      />
+    </div>
+  );
+};
