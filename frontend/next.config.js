@@ -8,6 +8,7 @@ const nextConfig = {
     API_KEY: process.env.API_KEY,
     CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS,
     SERVER_URL: process.env.SERVER_URL,
+    MAGIC_PK_LIVE: process.env.MAGIC_PK_LIVE,
   }
 }
 

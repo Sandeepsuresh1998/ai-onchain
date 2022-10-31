@@ -10,10 +10,10 @@ import {
   usePrepareContractWrite,
   useContractWrite,
   useSigner,
+  etherscanBlockExplorers,
 } from "wagmi";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import "@rainbow-me/rainbowkit/styles.css";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { DefaultService } from "../backend-client";
 import { OpenAPI } from "../backend-client";
 import {
@@ -28,12 +28,14 @@ import {
   Alert,
 } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
-
 import CssBaseline from "@mui/material/CssBaseline";
 import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import text_to_hash from "../util/text_to_hash";
 import contract from "../util/SyntheticDreams.json";
-const ethers = require("ethers");
+import { Magic } from "magic-sdk"
+import { ConnectExtension } from "@magic-ext/connect";
+import { ethers } from "ethers";
+import Typewriter from 'typewriter-effect/dist/core';
 
 const darkTheme = createTheme({
   palette: {
@@ -45,7 +47,9 @@ const darkTheme = createTheme({
   },
 });
 
-OpenAPI.BASE = "https://txt2img-api.vercel.app";
+// OpenAPI.BASE = "https://txt2img-api.vercel.app";
+OpenAPI.BASE = "http://localhost:8000";
+
 
 export default function Home() {
   const [alert, setAlert] = useState({
@@ -54,10 +58,14 @@ export default function Home() {
   });
   const [imageUrl, setImageUrl] = useState(null);
   const [isImageLoading, setIsLoading] = useState(false);
+  const [isMintLoading, setMintLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
   const [metadataUrl, setMetadataUrl] = useState(null);
   const [textHash, setTextHash] = useState(null);
-  const { address, isConnected } = useAccount();
+  const [address, setAddress ] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [magic, setMagic] = useState(null);
+  const [provider, setProvider] = useState(null);
   const { data: signer, isError, signerIsLoading } = useSigner();
   const { connect } = useConnect({
     connector: new InjectedConnector(),
@@ -73,18 +81,30 @@ export default function Home() {
       value: ethers.utils.parseEther("0.05"),
     },
   });
-
+  
   const { data, error, isLoading, isSuccess, write } = useContractWrite(config);
 
+  useEffect(() => {
+    const magicInstance = new Magic(process.env.MAGIC_PK_LIVE, { 
+      network: 'goerli',
+      extensions: [new ConnectExtension()]
+    });
+    
+    const providerInstance = new ethers.providers.Web3Provider(magicInstance.rpcProvider);
+
+    setMagic(magicInstance)
+    setProvider(providerInstance)
+  }, [])
+
   const handleSubmit = async (event) => {
+    setIsLoading(true);
+    setImageUrl(null);
     event.preventDefault();
     const val = event.target.elements.prompt.value.trim();
     setTextInput(val);
     if (!val) return;
 
     try {
-      setIsLoading(true);
-      setImageUrl(null);
 
       const res = await DefaultService.stableDiffusionImg2TxtPost({
         prompt: val,
@@ -110,8 +130,16 @@ export default function Home() {
     // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
 
     const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
-    setIsLoading(true);
+    setMintLoading(true);
     try {
+      if (!isConnected || (address == null)) {
+        setAlert({
+          msg: "Please connect wallet!",
+          type: "error"
+        });
+        return
+      }
+
       const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
         image_uri: imageUrl,
       });
@@ -120,9 +148,19 @@ export default function Home() {
       const hashedText = text_to_hash(textInput);
       setTextHash(hashedText);
 
+      const contractInstance = new ethers.Contract(
+        process.env.CONTRACT_ADDRESS,
+        contract.abi,
+        provider,
+      )
+
+      let tokenId = await contractInstance.getCurrentToken()
+      const newTokenId = tokenId.toNumber() + 1 
+      console.log(newTokenId)
+
       // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
       var metadata = {
-        name: `Dream: ${hashedText.substring(0, 4)}`,
+        name: `Dream #${newTokenId}`,
         description: textInput,
         image: ipfsImageUrl,
       };
@@ -134,6 +172,18 @@ export default function Home() {
         });
 
       setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri);
+      
+      const signer = await provider.getSigner()
+      
+
+      console.log(address)
+      console.log(textHash)
+      console.log(signer)
+      // const tx = await contractInstance.mintToken(
+      //   address,
+      //   baseIpfsUrl + metadataRes.ipfs_uri,
+      //   textHash,
+      // )
 
       await write?.();
       // TODO: Set UI to successful minting page
@@ -143,10 +193,32 @@ export default function Home() {
     } catch (e) {
       console.error(e);
     } finally {
-      setIsLoading(false);
+      setMintLoading(false);
     }
   };
 
+  const login = () => {
+    provider.listAccounts().then(accounts => {
+      setAddress(accounts[0])
+      console.log(accounts[0])
+      setIsConnected(true);
+    });
+  };
+
+  const showWallet = () => {
+    magic.connect.showWallet().catch((e) => {
+      console.log(e);
+    });
+  }
+
+  const disconnectWallet = async () => {
+    await magic.connect.disconnect().catch((e) => {
+      console.log(e)
+    });  
+    setIsConnected(false)
+    setAddress(null)
+  }
+  
   return (
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
@@ -169,26 +241,42 @@ export default function Home() {
         <AppContainer>
           <AppTitle>Synthetic Dreams</AppTitle>
           <Paper elevation={2} sx={{ my: 2, overflow: "hidden" }}>
-            <Box
-              minHeight="30vh"
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              {isLoading && <CircularProgress />}
-              {!isLoading && imageUrl && (
+            {!isImageLoading && !imageUrl && (
+              <div></div>
+            )}
+            
+            {isLoading && (
+              <Box
+                minHeight="30vh"
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+              <CircularProgress />
+              </Box>
+            )}
+
+            {!isLoading && imageUrl && (
+              <Box
+                minHeight="30vh"
+                sx={{
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
                 <img
                   width="100%"
                   src={imageUrl}
                   alt={"stable diffusion image."}
-                />
-              )}
-              {!isImageLoading && !imageUrl && (
-                <ImageSearchIcon sx={{ fontSize: "5rem" }} />
-              )}
-            </Box>
+                />              
+              </Box>
+                
+            )}
+
+            
           </Paper>
           <Box
             as="form"
@@ -232,7 +320,24 @@ export default function Home() {
                 },
               }}
             >
-              <ConnectButton />
+              {!isConnected && (
+                <Button onClick={login} variant="outlined">
+                  Connect Wallet
+                </Button> 
+              )}
+
+              {isConnected && (
+                <div>
+                  <Button onClick={showWallet} variant="outlined">
+                    {address}
+                  </Button>
+
+                  <Button onClick={disconnectWallet}>
+                    Disconnect
+                  </Button>
+                </div>
+              )}
+              
             </Box>
           </Box>
         </AppContainer>
