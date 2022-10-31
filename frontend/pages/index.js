@@ -84,6 +84,18 @@ export default function Home() {
   
   const { data, error, isLoading, isSuccess, write } = useContractWrite(config);
 
+  function addWalletListener() {
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        if (accounts.length > 0) {
+          setAddress(accounts[0]);
+        } else {
+          setAddress(null);
+        }
+      });
+    }
+  }
+
   useEffect(() => {
     const magicInstance = new Magic(process.env.MAGIC_PK_LIVE, { 
       network: 'goerli',
@@ -94,6 +106,7 @@ export default function Home() {
 
     setMagic(magicInstance)
     setProvider(providerInstance)
+    addWalletListener()
   }, [])
 
   const handleSubmit = async (event) => {
@@ -140,6 +153,28 @@ export default function Home() {
         return
       }
 
+      if (!window.ethereum) {
+        setAlert({
+          msg: "Please connect wallet!",
+          type: "error"
+        });
+        return
+      }
+      
+      const signer = await provider.getSigner();
+      console.log("Signer", signer)
+
+      // Read/Write Contract instance
+      const contractInstance = new ethers.Contract(
+        process.env.CONTRACT_ADDRESS,
+        contract.abi,
+        signer,
+      )
+
+      const connection = contractInstance.connect(signer);
+      const addr = connection.address;
+
+      // Setting Metadata for the Image
       const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
         image_uri: imageUrl,
       });
@@ -148,15 +183,8 @@ export default function Home() {
       const hashedText = text_to_hash(textInput);
       setTextHash(hashedText);
 
-      const contractInstance = new ethers.Contract(
-        process.env.CONTRACT_ADDRESS,
-        contract.abi,
-        provider,
-      )
-
       let tokenId = await contractInstance.getCurrentToken()
       const newTokenId = tokenId.toNumber() + 1 
-      console.log(newTokenId)
 
       // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
       var metadata = {
@@ -172,21 +200,35 @@ export default function Home() {
         });
 
       setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri);
-      
-      const signer = await provider.getSigner()
-      
 
-      console.log(address)
-      console.log(textHash)
-      console.log(signer)
-      // const tx = await contractInstance.mintToken(
-      //   address,
-      //   baseIpfsUrl + metadataRes.ipfs_uri,
-      //   textHash,
-      // )
+      console.log("Signer", signer)
+      console.log("Window", window.ethereum)
+      
+      // const tx_params = {
+      //   to: process.env.CONTRACT_ADDRESS,
+      //   from: address,
+      //   'data': window.contract.methods.
+      // }
 
-      await write?.();
-      // TODO: Set UI to successful minting page
+      const gasPrice = await provider.getGasPrice();
+      const mintGasFees = await contractInstance.estimateGas.mintToken(
+        address,
+        baseIpfsUrl + metadataRes.ipfs_uri,
+        textHash,
+        { value: ethers.utils.parseEther("0.05") }
+      );
+
+      const tx = await contractInstance.mintToken(
+        address,
+        baseIpfsUrl + metadataRes.ipfs_uri,
+        textHash,
+        { value: ethers.utils.parseEther("0.05") }
+      )
+
+      await tx.wait();
+
+      // await write?.();
+      // // TODO: Set UI to successful minting page
       setAlert({
         msg: "Minted!",
       });
@@ -200,14 +242,14 @@ export default function Home() {
   const login = () => {
     provider.listAccounts().then(accounts => {
       setAddress(accounts[0])
-      console.log(accounts[0])
+      console.log("Connected Account",accounts[0])
       setIsConnected(true);
     });
   };
 
   const showWallet = () => {
     magic.connect.showWallet().catch((e) => {
-      console.log(e);
+      console.log("Error showing wallet", e);
     });
   }
 
