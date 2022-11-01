@@ -253,9 +253,7 @@ export default function Home() {
       // }
 
       const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
-        overrides: {
           value: mint_price,
-        }
       });
       console.log(typeof(tx))
       await tx.wait()
