@@ -88,6 +88,7 @@ export default function Home() {
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts) => {
         if (accounts.length > 0) {
+          console.log("Address changed")
           setAddress(accounts[0]);
         } else {
           setAddress(null);
@@ -137,12 +138,55 @@ export default function Home() {
     }
   };
 
+  const create_metadata = async () => {
+    const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
+    // Read-Only Contract instance
+    const contractInstance = new ethers.Contract(
+      process.env.CONTRACT_ADDRESS,
+      contract.abi,
+      provider,
+    )
+    // Get IPFS link for the Image
+    const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
+      image_uri: imageUrl,
+    });
+    const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
+
+    // Create hashed text for inputted text for smart contract
+    const hashedText = text_to_hash(textInput);
+    setTextHash(hashedText);
+
+    // Grab next token id
+    let tokenId = await contractInstance.getCurrentToken()
+    const newTokenId = tokenId.toNumber() + 1 
+
+    // Contruct metadata with next token id
+    var metadata = {
+      name: `Dream #${newTokenId}`,
+      description: textInput,
+      image: ipfsImageUrl,
+    };
+
+    // Call api to pin metadata
+    const metadataRes =
+      await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
+        metadata: metadata,
+      });
+    const nft_metadata_uri = baseIpfsUrl + metadataRes.ipfs_uri
+
+    setMetadataUrl(nft_metadata_uri);
+
+    return {nft_metadata_uri, hashedText}
+  }
+
+  const byteSize = str => new Blob([str]).size;
+
   const handleMint = async (event) => {
     event.preventDefault();
     // TODO: Create check that texted input is not taken
     // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
 
-    const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
+    
     setMintLoading(true);
     try {
       if (!isConnected || (address == null)) {
@@ -160,9 +204,14 @@ export default function Home() {
         });
         return
       }
+
+      const {nft_metadata_uri, hashedText} = await create_metadata();
       
       const signer = await provider.getSigner();
       console.log("Signer", signer)
+
+      const addr = await signer.getAddress()
+      console.log("Address from signer", addr)
 
       // Read/Write Contract instance
       const contractInstance = new ethers.Contract(
@@ -171,64 +220,46 @@ export default function Home() {
         signer,
       )
 
-      const connection = contractInstance.connect(signer);
-      const addr = connection.address;
-
-      // Setting Metadata for the Image
-      const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
-        image_uri: imageUrl,
-      });
-
-      const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
-      const hashedText = text_to_hash(textInput);
-      setTextHash(hashedText);
-
-      let tokenId = await contractInstance.getCurrentToken()
-      const newTokenId = tokenId.toNumber() + 1 
-
-      // TODO: Alt: throw smaller version of hashed text into name (looks robotic)
-      var metadata = {
-        name: `Dream #${newTokenId}`,
-        description: textInput,
-        image: ipfsImageUrl,
-      };
-
-      // Call api to pin metadata
-      const metadataRes =
-        await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
-          metadata: metadata,
-        });
-
-      setMetadataUrl(baseIpfsUrl + metadataRes.ipfs_uri);
-
+      console.log("Contract", contractInstance)
       console.log("Signer", signer)
       console.log("Window", window.ethereum)
+      console.log("Address", addr)
+      console.log("Hashed Text", byteSize(hashedText))
+      console.log("Text Input", byteSize(textInput))
+      console.log("Token Metadata", nft_metadata_uri)
+      const final_hashed_text = hashedText.valueOf()
+      const mint_price = ethers.utils.parseEther("0.05")
+      console.log("Mint PRice", mint_price)
+      // // Gas estimations
+      // const gasPrice = await provider.getGasPrice();
+      // const mintGasFees = await contractInstance.estimateGas.mintToken(
+      //   addr,
+      //   nft_metadata_uri,
+      //   final_hashed_text,
+      //   {
+      //     value: ethers.utils.parseEther("0.05"),
+      //   }
+      // );
+      // const finalGasPrice = gasPrice * mintGasFees;
+
+      // console.log("Gas Price", gasPrice)
+      // console.log("Mint Gas Fees", gasPrice)
+
+      // console.log("Contract Address", process.env.CONTRACT_ADDRESS)
       
-      // const tx_params = {
-      //   to: process.env.CONTRACT_ADDRESS,
-      //   from: address,
-      //   'data': window.contract.methods.
+
+      // const overrideOptions = {
+      //   "value": ethers.utils.parseEther("0.05"),
       // }
 
-      const gasPrice = await provider.getGasPrice();
-      const mintGasFees = await contractInstance.estimateGas.mintToken(
-        address,
-        baseIpfsUrl + metadataRes.ipfs_uri,
-        textHash,
-        { value: ethers.utils.parseEther("0.05") }
-      );
-
-      const tx = await contractInstance.mintToken(
-        address,
-        baseIpfsUrl + metadataRes.ipfs_uri,
-        textHash,
-        { value: ethers.utils.parseEther("0.05") }
-      )
-
-      await tx.wait();
-
-      // await write?.();
-      // // TODO: Set UI to successful minting page
+      const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
+        overrides: {
+          value: mint_price,
+        }
+      });
+      console.log(typeof(tx))
+      await tx.wait()
+      // TODO: Set UI to successful minting page
       setAlert({
         msg: "Minted!",
       });
