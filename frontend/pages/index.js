@@ -230,17 +230,14 @@ export default function Home() {
       const final_hashed_text = hashedText.valueOf()
       const mint_price = ethers.utils.parseEther("0.05")
       console.log("Mint PRice", mint_price)
-      // // Gas estimations
+      // Gas estimations
       // const gasPrice = await provider.getGasPrice();
       // const mintGasFees = await contractInstance.estimateGas.mintToken(
-      //   addr,
-      //   nft_metadata_uri,
-      //   final_hashed_text,
-      //   {
-      //     value: ethers.utils.parseEther("0.05"),
-      //   }
+      //     addr,
+      //     nft_metadata_uri,
+      //     final_hashed_text,
       // );
-      // const finalGasPrice = gasPrice * mintGasFees;
+      // const final_gas_price = gasPrice * mintGasFees;
 
       // console.log("Gas Price", gasPrice)
       // console.log("Mint Gas Fees", gasPrice)
@@ -252,9 +249,17 @@ export default function Home() {
       //   "value": ethers.utils.parseEther("0.05"),
       // }
 
-      const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
+      try{
+         const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
+          // gasPrice: gasPrice,
+          // gasLimit: "99000",
           value: mint_price,
-      });
+        });
+      } catch (error) {
+        console.log(error)
+      }
+
+      
       console.log(typeof(tx))
       await tx.wait()
       // TODO: Set UI to successful minting page
