@@ -156,7 +156,7 @@ export default function Home() {
     // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
 
     const walletInfo = await magic.connect.getWalletInfo();
-    console.log(walletInfo.walletType)
+    console.log("Wallet Type", walletInfo.walletType)
     
     setMintLoading(true);
     try {
@@ -195,50 +195,60 @@ export default function Home() {
       // Gas estimations
       const mint_price = ethers.utils.parseEther('0.05')
       console.log("Mint Price", mint_price)
-      // if (walletInfo.walletType != "magic") {
-      //   console.log("Starting gas estimation flow")
-      //   const gasPrice = await provider.getGasPrice();
-      //   console.log("Gas price", gasPrice)
-      //   const mintGasFees = await contractInstance.estimateGas.mintToken(
-      //       addr,
-      //       nft_metadata_uri,
-      //       final_hashed_text,
-      //       {value: mint_price},
-      //   );
-        
-      //   console.log("Mint Gas Fess", mintGasFees)
-      //   const final_gas_price = gasPrice * mintGasFees;
-
-      //   const overrideOptions = {
-      //     gasPrice: final_gas_price,
-      //     value: ethers.utils.parseEther("0.05"),
-      //   }
-      //   const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
-
-      //   const receipt = await tx.wait()
-      //   console.log("Receipt", receipt)
-
-      //   setMintLoading(False)
-      //   setAlert({
-      //     msg: "Minted at ",
-      //   });
-      //   return
-      // }
-      
-      try{
-         const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
-          value: mint_price,
-        });
-        
-      } catch (error) {
-        console.log(error)
+      const overrideOptions = {
+        value: ethers.utils.parseEther("0.05"),
       }
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setMintLoading(false);
+      if (walletInfo.walletType != "magic") {
+
+        // Use alchemy provider directly, magic seems to fail
+        // TODO: Change network based on prod vs int
+        const alchemyProvider = new ethers.providers.AlchemyProvider("goerli", process.env.API_KEY)
+        const provider_contract = new ethers.Contract(
+          process.env.CONTRACT_ADDRESS,
+          contract.abi,
+          alchemyProvider,
+        )
+        // Manually calculate gas and pass into wallet
+        console.log("Starting gas estimation flow for non MC wallets")
+        const gasPrice = await provider.getGasPrice();
+        console.log("Gas price", gasPrice)
+
+        const mintGasFees = await provider_contract.estimateGas.mintToken(
+            addr,
+            nft_metadata_uri,
+            final_hashed_text,
+            {
+              value: mint_price
+            },
+        );
+        
+        console.log("Mint Gas Fess", mintGasFees)
+        const final_gas_price = gasPrice.mul(mintGasFees);
+        console.log(final_gas_price)
+        overrideOptions = {
+          gasPrice: final_gas_price,
+          gasLimit: "15000000",
+          value: ethers.utils.parseEther("0.05"),
+        }
+
+        console.log("Final gas price", final_gas_price)
       }
-  };
+      const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
+        value: mint_price,
+      });
+      const receipt = await tx.wait()
+      console.log(receipt)
+
+      setMintLoading(false)
+      setAlert({
+        msg: "Minted!",
+      });
+    } catch (error) {
+      console.log(error)
+    } finally {
+      setMintLoading(false);
+    }
+  }
 
   const dalle_generate = async () => {
 
