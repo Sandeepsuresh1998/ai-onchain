@@ -191,45 +191,45 @@ export default function Home() {
       console.log("Text Input", byteSize(textInput))
       console.log("Token Metadata", nft_metadata_uri)
       const final_hashed_text = hashedText.valueOf()
-      const mint_price = ethers.utils.parseEther("0.05")
-      console.log("Mint Price", mint_price)
-
       // NOTE: We need to do gas estimations for a third party wallet connection but not for MC users.   
       // Gas estimations
+      const mint_price = ethers.utils.parseEther('0.05')
+      console.log("Mint Price", mint_price)
+      // if (walletInfo.walletType != "magic") {
+      //   console.log("Starting gas estimation flow")
+      //   const gasPrice = await provider.getGasPrice();
+      //   console.log("Gas price", gasPrice)
+      //   const mintGasFees = await contractInstance.estimateGas.mintToken(
+      //       addr,
+      //       nft_metadata_uri,
+      //       final_hashed_text,
+      //       {value: mint_price},
+      //   );
+        
+      //   console.log("Mint Gas Fess", mintGasFees)
+      //   const final_gas_price = gasPrice * mintGasFees;
 
-      if (walletInfo.walletType != "magic") {
-        console.log("Starting gas estimation flow")
-        const gasPrice = await provider.getGasPrice();
-        console.log("Gas price", gasPrice)
-        const mintGasFees = await contractInstance.estimateGas.mintToken(
-            addr,
-            nft_metadata_uri,
-            final_hashed_text, 
-        );
-        console.log("Mint Gas Fess", mintGasFees)
-        const final_gas_price = gasPrice * mintGasFees;
+      //   const overrideOptions = {
+      //     gasPrice: final_gas_price,
+      //     value: ethers.utils.parseEther("0.05"),
+      //   }
+      //   const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
 
-        const overrideOptions = {
-          gasPrice: final_gas_price,
-          value: ethers.utils.parseEther("0.05"),
-        }
-        const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
+      //   const receipt = await tx.wait()
+      //   console.log("Receipt", receipt)
 
-        const receipt = await tx.wait()
-        console.log("Receipt", receipt)
-
-        setMintLoading(False)
-        setAlert({
-          msg: "Minted at ",
-        });
-      }
+      //   setMintLoading(False)
+      //   setAlert({
+      //     msg: "Minted at ",
+      //   });
+      //   return
+      // }
       
       try{
          const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
           value: mint_price,
         });
         
-
       } catch (error) {
         console.log(error)
       }
