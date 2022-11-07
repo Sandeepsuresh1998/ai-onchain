@@ -1,19 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Particles from "react-particles";
 import { loadFull } from "tsparticles";
-import { server } from "../config";
-import {
-  useAccount,
-  useConnect,
-  useDisconnect,
-  useContractRead,
-  usePrepareContractWrite,
-  useContractWrite,
-  useSigner,
-  etherscanBlockExplorers,
-} from "wagmi";
-import { InjectedConnector } from "wagmi/connectors/injected";
-import "@rainbow-me/rainbowkit/styles.css";
 import { DefaultService } from "../backend-client";
 import { OpenAPI } from "../backend-client";
 import {
@@ -29,13 +16,12 @@ import {
 } from "@mui/material";
 import CircularProgress from "@mui/material/CircularProgress";
 import CssBaseline from "@mui/material/CssBaseline";
-import ImageSearchIcon from "@mui/icons-material/ImageSearch";
 import text_to_hash from "../util/text_to_hash";
 import contract from "../util/SyntheticDreams.json";
 import { Magic } from "magic-sdk"
 import { ConnectExtension } from "@magic-ext/connect";
 import { ethers } from "ethers";
-import Typewriter from 'typewriter-effect/dist/core';
+import { Configuration, OpenAIApi } from "openai";
 
 const darkTheme = createTheme({
   palette: {
@@ -66,23 +52,6 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [magic, setMagic] = useState(null);
   const [provider, setProvider] = useState(null);
-  const { data: signer, isError, signerIsLoading } = useSigner();
-  const { connect } = useConnect({
-    connector: new InjectedConnector(),
-  });
-  const { disconnect } = useDisconnect();
-
-  const { config } = usePrepareContractWrite({
-    addressOrName: process.env.CONTRACT_ADDRESS,
-    contractInterface: contract.abi,
-    functionName: "mintToken",
-    args: [address, metadataUrl, textHash],
-    overrides: {
-      value: ethers.utils.parseEther("0.05"),
-    },
-  });
-  
-  const { data, error, isLoading, isSuccess, write } = useContractWrite(config);
 
   function addWalletListener() {
     if (window.ethereum) {
@@ -186,18 +155,12 @@ export default function Home() {
     // TODO: Create check that texted input is not taken
     // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
 
+    const walletInfo = await magic.connect.getWalletInfo();
+    console.log(walletInfo.walletType)
     
     setMintLoading(true);
     try {
-      if (!isConnected || (address == null)) {
-        setAlert({
-          msg: "Please connect wallet!",
-          type: "error"
-        });
-        return
-      }
-
-      if (!window.ethereum) {
+      if (!isConnected) {
         setAlert({
           msg: "Please connect wallet!",
           type: "error"
@@ -229,49 +192,78 @@ export default function Home() {
       console.log("Token Metadata", nft_metadata_uri)
       const final_hashed_text = hashedText.valueOf()
       const mint_price = ethers.utils.parseEther("0.05")
-      console.log("Mint PRice", mint_price)
+      console.log("Mint Price", mint_price)
+
+      // NOTE: We need to do gas estimations for a third party wallet connection but not for MC users.   
       // Gas estimations
-      // const gasPrice = await provider.getGasPrice();
-      // const mintGasFees = await contractInstance.estimateGas.mintToken(
-      //     addr,
-      //     nft_metadata_uri,
-      //     final_hashed_text,
-      // );
-      // const final_gas_price = gasPrice * mintGasFees;
 
-      // console.log("Gas Price", gasPrice)
-      // console.log("Mint Gas Fees", gasPrice)
+      if (walletInfo.walletType != "magic") {
+        console.log("Starting gas estimation flow")
+        const gasPrice = await provider.getGasPrice();
+        console.log("Gas price", gasPrice)
+        const mintGasFees = await contractInstance.estimateGas.mintToken(
+            addr,
+            nft_metadata_uri,
+            final_hashed_text, 
+        );
+        console.log("Mint Gas Fess", mintGasFees)
+        const final_gas_price = gasPrice * mintGasFees;
 
-      // console.log("Contract Address", process.env.CONTRACT_ADDRESS)
+        const overrideOptions = {
+          gasPrice: final_gas_price,
+          value: ethers.utils.parseEther("0.05"),
+        }
+        const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
+
+        const receipt = await tx.wait()
+        console.log("Receipt", receipt)
+
+        setMintLoading(False)
+        setAlert({
+          msg: "Minted at ",
+        });
+      }
       
-
-      // const overrideOptions = {
-      //   "value": ethers.utils.parseEther("0.05"),
-      // }
-
       try{
          const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
-          // gasPrice: gasPrice,
-          // gasLimit: "99000",
           value: mint_price,
         });
+        
+
       } catch (error) {
         console.log(error)
       }
-
-      
-      console.log(typeof(tx))
-      await tx.wait()
-      // TODO: Set UI to successful minting page
-      setAlert({
-        msg: "Minted!",
-      });
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setMintLoading(false);
-    }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setMintLoading(false);
+      }
   };
+
+  const dalle_generate = async () => {
+
+    if (!textInput) {
+      setAlert({
+        msg: "Please input a text before you generate an image",
+        type: "errors"
+      });
+    }
+
+    const configuration = new Configuration({
+        apiKey: process.env.DALLE_SK,
+    });
+    const openai = new OpenAIApi(configuration);
+
+    const response = await openai.createImage({
+      prompt: textInput,
+      n: 1,
+      size: "1024x1024",
+    });
+
+    const image_url = response.data.data[0].url;
+    setImageUrl(image_url)
+
+  }
 
   const login = () => {
     provider.listAccounts().then(accounts => {
@@ -321,7 +313,7 @@ export default function Home() {
               <div></div>
             )}
             
-            {isLoading && (
+            {isImageLoading && (
               <Box
                 minHeight="30vh"
                 sx={{
@@ -334,7 +326,7 @@ export default function Home() {
               </Box>
             )}
 
-            {!isLoading && imageUrl && (
+            {!isImageLoading && imageUrl && (
               <Box
                 minHeight="30vh"
                 sx={{
@@ -349,10 +341,8 @@ export default function Home() {
                   alt={"stable diffusion image."}
                 />              
               </Box>
-                
             )}
 
-            
           </Paper>
           <Box
             as="form"
@@ -441,6 +431,11 @@ const AppContainer = ({ children }) => (
     justifyContent="center"
     alignItems="center"
     textAlign="center"
+    // sx={{
+    //   display: ["block", "flex"],
+    //   flexDirection: ["column"],
+    // }}
+    // height="100%"
     maxWidth="600px"
     mx="auto"
   >
