@@ -80,15 +80,15 @@ export default function Home() {
   }, [])
 
   const handleSubmit = async (event) => {
+    event.preventDefault();
     setIsLoading(true);
     setImageUrl(null);
-    event.preventDefault();
     const val = event.target.elements.prompt.value.trim();
     setTextInput(val);
     if (!val) return;
 
     try {
-
+      
       const res = await DefaultService.stableDiffusionImg2TxtPost({
         prompt: val,
       });
