@@ -34,7 +34,7 @@ const darkTheme = createTheme({
   },
 });
 
-OpenAPI.BASE = process.env.URL
+OpenAPI.BASE = process.env.URL;
 // OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
@@ -135,7 +135,6 @@ export default function Home() {
 
     // Create hashed text for inputted text for smart contract
     const hashedText = text_to_hash(textInput);
-    setTextHash(hashedText);
 
     // Grab next token id
     let tokenId = await contractInstance.getCurrentToken()
@@ -154,9 +153,7 @@ export default function Home() {
         metadata: metadata,
       });
     const nft_metadata_uri = baseIpfsUrl + metadataRes.ipfs_uri
-
-    setMetadataUrl(nft_metadata_uri);
-
+    
     return {nft_metadata_uri, hashedText}
   }
 
@@ -170,7 +167,6 @@ export default function Home() {
     const walletInfo = await magic.connect.getWalletInfo();
     console.log("Wallet Type", walletInfo.walletType)
     
-    setMintLoading(true);
     try {
       if (!isConnected) {
         setAlert({
@@ -181,33 +177,19 @@ export default function Home() {
       }
 
       const {nft_metadata_uri, hashedText} = await create_metadata();
-      
       const signer = await provider.getSigner();
-      console.log("Signer", signer)
-
       const addr = await signer.getAddress()
-      console.log("Address from signer", addr)
-
       // Read/Write Contract instance
       const contractInstance = new ethers.Contract(
         process.env.CONTRACT_ADDRESS,
         contract.abi,
         signer,
       )
-
-      console.log("Contract", contractInstance)
-      console.log("Signer", signer)
-      console.log("Window", window.ethereum)
-      console.log("Address", addr)
-      console.log("Hashed Text", byteSize(hashedText))
-      console.log("Text Input", byteSize(textInput))
-      console.log("Token Metadata", nft_metadata_uri)
       const final_hashed_text = hashedText.valueOf()
-      // NOTE: We need to do gas estimations for a third party wallet connection but not for MC users.   
+      console.log("Type of hashed text", typeof(final_hashed_text))
       // Gas estimations
       const mint_price = ethers.utils.parseEther('0.05')
-      console.log("Mint Price", mint_price)
-      const overrideOptions = {
+      let overrideOptions = {
         value: ethers.utils.parseEther("0.05"),
       }
       if (walletInfo.walletType != "magic") {
@@ -240,15 +222,11 @@ export default function Home() {
       const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
       const receipt = await tx.wait()
       console.log(receipt)
-
-      setMintLoading(false)
       setAlert({
         msg: "Minted!",
       });
     } catch (error) {
       console.log(error)
-    } finally {
-      setMintLoading(false);
     }
   }
 
