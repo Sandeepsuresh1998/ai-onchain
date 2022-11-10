@@ -22,6 +22,7 @@ import { Magic } from "magic-sdk"
 import { ConnectExtension } from "@magic-ext/connect";
 import { ethers } from "ethers";
 import { Configuration, OpenAIApi } from "openai";
+import { wallet } from "@rainbow-me/rainbowkit";
 
 const darkTheme = createTheme({
   palette: {
@@ -33,9 +34,8 @@ const darkTheme = createTheme({
   },
 });
 
-// OpenAPI.BASE = "https://txt2img-api.vercel.app";
-OpenAPI.BASE = "http://localhost:8000";
-
+OpenAPI.BASE = process.env.URL
+// OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
   const [alert, setAlert] = useState({
@@ -44,14 +44,13 @@ export default function Home() {
   });
   const [imageUrl, setImageUrl] = useState(null);
   const [isImageLoading, setIsLoading] = useState(false);
-  const [isMintLoading, setMintLoading] = useState(false);
   const [textInput, setTextInput] = useState(null);
-  const [metadataUrl, setMetadataUrl] = useState(null);
-  const [textHash, setTextHash] = useState(null);
   const [address, setAddress ] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [magic, setMagic] = useState(null);
   const [provider, setProvider] = useState(null);
+  const [openai, setOpenAI] = useState(null);
+  const [walletType, setWalletType] = useState(null);
 
   function addWalletListener() {
     if (window.ethereum) {
@@ -67,32 +66,45 @@ export default function Home() {
   }
 
   useEffect(() => {
+
+    // Set Magic Instance
     const magicInstance = new Magic(process.env.MAGIC_PK_LIVE, { 
       network: 'goerli',
       extensions: [new ConnectExtension()]
     });
-    
     const providerInstance = new ethers.providers.Web3Provider(magicInstance.rpcProvider);
 
+    // Create Dalle2 Instance
+    const configuration = new Configuration({
+      apiKey: process.env.DALLE_SK,
+    });
+    const openai = new OpenAIApi(configuration);
+  
     setMagic(magicInstance)
     setProvider(providerInstance)
+    setOpenAI(openai)
+
     addWalletListener()
   }, [])
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setIsLoading(true);
     setImageUrl(null);
     const val = event.target.elements.prompt.value.trim();
-    setTextInput(val);
+    console.log("Going to generate image with: " + val)
     if (!val) return;
+    setTextInput(val);
 
     try {
-      
-      const res = await DefaultService.stableDiffusionImg2TxtPost({
+      setIsLoading(true);
+      const response = await openai.createImage({
         prompt: val,
+        n: 1,
+        size: "1024x1024",
+        user: address,
       });
-      setImageUrl(res.image_uris[0]);
+      const image_url = response.data.data[0].url;
+      setImageUrl(image_url);
       setAlert({
         msg: "dreaming complete",
       });
@@ -210,9 +222,6 @@ export default function Home() {
         )
         // Manually calculate gas and pass into wallet
         console.log("Starting gas estimation flow for non MC wallets")
-        const gasPrice = await provider.getGasPrice();
-        console.log("Gas price", gasPrice)
-
         const mintGasFees = await provider_contract.estimateGas.mintToken(
             addr,
             nft_metadata_uri,
@@ -223,19 +232,12 @@ export default function Home() {
         );
         
         console.log("Mint Gas Fess", mintGasFees)
-        const final_gas_price = gasPrice.mul(mintGasFees);
-        console.log(final_gas_price)
         overrideOptions = {
-          gasPrice: final_gas_price,
-          gasLimit: "15000000",
+          gasLimit: mintGasFees,
           value: ethers.utils.parseEther("0.05"),
         }
-
-        console.log("Final gas price", final_gas_price)
       }
-      const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, {
-        value: mint_price,
-      });
+      const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
       const receipt = await tx.wait()
       console.log(receipt)
 
@@ -250,36 +252,15 @@ export default function Home() {
     }
   }
 
-  const dalle_generate = async () => {
-
-    if (!textInput) {
-      setAlert({
-        msg: "Please input a text before you generate an image",
-        type: "errors"
-      });
-    }
-
-    const configuration = new Configuration({
-        apiKey: process.env.DALLE_SK,
-    });
-    const openai = new OpenAIApi(configuration);
-
-    const response = await openai.createImage({
-      prompt: textInput,
-      n: 1,
-      size: "1024x1024",
-    });
-
-    const image_url = response.data.data[0].url;
-    setImageUrl(image_url)
-
-  }
-
-  const login = () => {
+  const login = async () => {
     provider.listAccounts().then(accounts => {
       setAddress(accounts[0])
       console.log("Connected Account",accounts[0])
       setIsConnected(true);
+      magic.connect.getWalletInfo().then(walletInfo => {
+        console.log("Setting wallet type: " + walletInfo.walletType)
+        setWalletType(walletInfo.walletType)
+      });
     });
   };
 
@@ -404,9 +385,12 @@ export default function Home() {
 
               {isConnected && (
                 <div>
-                  <Button onClick={showWallet} variant="outlined">
-                    {address}
-                  </Button>
+                  {walletType == "magic" && (
+                    <Button onClick={showWallet} variant="outlined">
+                      Show Wallet
+                    </Button>
+                  )}
+                  
 
                   <Button onClick={disconnectWallet}>
                     Disconnect

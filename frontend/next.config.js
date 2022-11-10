@@ -9,6 +9,7 @@ const nextConfig = {
     CONTRACT_ADDRESS: process.env.CONTRACT_ADDRESS,
     SERVER_URL: process.env.SERVER_URL,
     MAGIC_PK_LIVE: process.env.MAGIC_PK_LIVE,
+    DALLE_SK: process.env.DALLE_SK,
   }
 }
 
