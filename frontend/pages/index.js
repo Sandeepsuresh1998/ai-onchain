@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Particles from "react-particles";
+import Typed from "react-typed";
 import { loadFull } from "tsparticles";
 import { DefaultService } from "../backend-client";
 import { OpenAPI } from "../backend-client";
@@ -22,13 +23,12 @@ import { Magic } from "magic-sdk"
 import { ConnectExtension } from "@magic-ext/connect";
 import { ethers } from "ethers";
 import { Configuration, OpenAIApi } from "openai";
-import { wallet } from "@rainbow-me/rainbowkit";
 
 const darkTheme = createTheme({
   palette: {
     primary: {
       // light: will be calculated from palette.primary.main,
-      main: "#6a1b9a",
+      main: "#7d12ff",
     },
     mode: "dark",
   },
@@ -52,6 +52,7 @@ export default function Home() {
   const [openai, setOpenAI] = useState(null);
   const [walletType, setWalletType] = useState(null);
   const [mintedTokenId, setMintedTokenId] = useState(null);
+  const [internalTokenId, setInternalTokenId] = useState(0);
 
   function addWalletListener() {
     if (window.ethereum) {
@@ -348,12 +349,12 @@ export default function Home() {
             <TextField
               name="prompt"
               size="small"
-              label="Image Prompt"
-              placeholder="a golden retriever in the style of a cave painting"
+              autoFocus="true"
+              placeholder="Create a dream"
             />
             <Box mb={2} />
             <Button type="submit" variant="contained">
-              generate
+              Dream
             </Button>
             <Box mb={2} />
             {imageUrl && (
@@ -380,7 +381,7 @@ export default function Home() {
             >
               {!isConnected && (
                 <Button onClick={login} variant="outlined">
-                  Connect Wallet
+                  Connect
                 </Button> 
               )}
 
@@ -417,7 +418,7 @@ const AppTitle = ({ children }) => (
     variant="h3"
     sx={{
       letterSpacing: ["2px", "8px"],
-      textShadow: "-3px -3px 0px #fff4, 4px 4px 0px #6a1b9af0",
+      textShadow: "-3px -3px 0px #fff4, 4px 4px 0px #7d12ff",
     }}
   >
     {children}
@@ -485,10 +486,10 @@ const TsParticles = () => {
           },
           particles: {
             color: {
-              value: "#fff4",
+              value: "#7d12ff",
             },
             links: {
-              color: "#6a1b9a40",
+              color: "#7d12ff",
               distance: 150,
               enable: true,
               opacity: 0.5,
