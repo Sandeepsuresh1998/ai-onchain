@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Particles from "react-particles";
-import Typed from "react-typed";
 import { loadFull } from "tsparticles";
 import { DefaultService } from "../backend-client";
 import { OpenAPI } from "../backend-client";

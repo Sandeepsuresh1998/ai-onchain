@@ -34,9 +34,7 @@
     "tsparticles": "^2.3.4",
     "tsparticles-engine": "^2.3.3",
     "typewriter-effect": "^2.19.0",
-    "wagmi": "^0.6.6",
-    "web3": "^1.8.0",
-    "web3modal": "^1.9.9"
+    "web3": "^1.8.1"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.11",
