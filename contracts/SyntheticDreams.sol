@@ -12,7 +12,7 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
 
-    uint256 MINT_PRICE = 0.05 ether;
+    uint256 MINT_PRICE = 0.03 ether;
     uint256 LIST_PRICE = 0.01 ether;
 
     uint256 MAX_SUPPLY = 10000;

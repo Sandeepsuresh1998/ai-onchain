@@ -34,8 +34,8 @@ const darkTheme = createTheme({
   },
 });
 
-OpenAPI.BASE = process.env.URL;
-// OpenAPI.BASE = "http://localhost:8000";
+//OpenAPI.BASE = process.env.SERVER_URL;
+OpenAPI.BASE = "http://localhost:8000";
 
 export default function Home() {
   const [alert, setAlert] = useState({
@@ -51,6 +51,7 @@ export default function Home() {
   const [provider, setProvider] = useState(null);
   const [openai, setOpenAI] = useState(null);
   const [walletType, setWalletType] = useState(null);
+  const [mintedTokenId, setMintedTokenId] = useState(null);
 
   function addWalletListener() {
     if (window.ethereum) {
@@ -69,7 +70,7 @@ export default function Home() {
 
     // Set Magic Instance
     const magicInstance = new Magic(process.env.MAGIC_PK_LIVE, { 
-      network: 'goerli',
+      network: "goerli",
       extensions: [new ConnectExtension()]
     });
     const providerInstance = new ethers.providers.Web3Provider(magicInstance.rpcProvider);
@@ -122,30 +123,36 @@ export default function Home() {
   const create_metadata = async () => {
     const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
     // Read-Only Contract instance
+    console.log("Contract Address", process.env.CONTRACT_ADDRESS)
+    console.log("Provider", provider)
+    console.log("ABI", contract.abi)
     const contractInstance = new ethers.Contract(
       process.env.CONTRACT_ADDRESS,
       contract.abi,
       provider,
     )
+    
+    // Grab next token id
+    let tokenId = await contractInstance.getCurrentToken()
+    const newTokenId = tokenId.toNumber() + 1
+    
+    console.log("TokenID: ", newTokenId)
+
     // Get IPFS link for the Image
     const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
       image_uri: imageUrl,
     });
     const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
 
-    // Create hashed text for inputted text for smart contract
-    const hashedText = text_to_hash(textInput);
-
-    // Grab next token id
-    let tokenId = await contractInstance.getCurrentToken()
-    const newTokenId = tokenId.toNumber() + 1 
-
+    
     // Contruct metadata with next token id
     var metadata = {
       name: `Dream #${newTokenId}`,
       description: textInput,
       image: ipfsImageUrl,
     };
+
+    setMintedTokenId(newTokenId)
 
     // Call api to pin metadata
     const metadataRes =
@@ -154,16 +161,13 @@ export default function Home() {
       });
     const nft_metadata_uri = baseIpfsUrl + metadataRes.ipfs_uri
     
-    return {nft_metadata_uri, hashedText}
+    return nft_metadata_uri
   }
 
   const byteSize = str => new Blob([str]).size;
 
   const handleMint = async (event) => {
     event.preventDefault();
-    // TODO: Create check that texted input is not taken
-    // TODO: Alternative, let tx fail at the contract level (bad UX, less work)
-
     const walletInfo = await magic.connect.getWalletInfo();
     console.log("Wallet Type", walletInfo.walletType)
     
@@ -176,16 +180,34 @@ export default function Home() {
         return
       }
 
-      const {nft_metadata_uri, hashedText} = await create_metadata();
-      const signer = await provider.getSigner();
-      const addr = await signer.getAddress()
-      // Read/Write Contract instance
-      const contractInstance = new ethers.Contract(
+      // Read Instance
+      const alchemyProvider = new ethers.providers.AlchemyProvider("goerli", process.env.API_KEY)
+      const provider_contract = new ethers.Contract(
         process.env.CONTRACT_ADDRESS,
         contract.abi,
-        signer,
+        alchemyProvider,
       )
+
+      // Create hashed text for inputted text for smart contract
+      const hashedText = text_to_hash(textInput);
+
+      // Check if text is already taken
+      const textIsTaken = await provider_contract.isTextMinted(hashedText)
+      console.log("Text is taken: ", textIsTaken)
+
+      if (textIsTaken) {
+        setAlert({
+          msg: "This dream has already been taken, please dream something else",
+          type: "error", 
+        });
+        return
+      }
+
+      // Create metadata for new image
+      const nft_metadata_uri = await create_metadata();
       const final_hashed_text = hashedText.valueOf()
+      const signer = await provider.getSigner();
+      const addr = await signer.getAddress();
       console.log("Type of hashed text", typeof(final_hashed_text))
       // Gas estimations
       const mint_price = ethers.utils.parseEther('0.05')
@@ -193,15 +215,8 @@ export default function Home() {
         value: ethers.utils.parseEther("0.05"),
       }
       if (walletInfo.walletType != "magic") {
-
         // Use alchemy provider directly, magic seems to fail
         // TODO: Change network based on prod vs int
-        const alchemyProvider = new ethers.providers.AlchemyProvider("goerli", process.env.API_KEY)
-        const provider_contract = new ethers.Contract(
-          process.env.CONTRACT_ADDRESS,
-          contract.abi,
-          alchemyProvider,
-        )
         // Manually calculate gas and pass into wallet
         console.log("Starting gas estimation flow for non MC wallets")
         const mintGasFees = await provider_contract.estimateGas.mintToken(
@@ -213,12 +228,20 @@ export default function Home() {
             },
         );
         
-        console.log("Mint Gas Fess", mintGasFees)
         overrideOptions = {
           gasLimit: mintGasFees,
           value: ethers.utils.parseEther("0.05"),
         }
       }
+
+      // Preparing to mint
+      const contractInstance = new ethers.Contract(
+        process.env.CONTRACT_ADDRESS,
+        contract.abi,
+        signer,
+      )
+
+      // Mint transaction
       const tx = await contractInstance.mintToken(addr,nft_metadata_uri,final_hashed_text, overrideOptions);
       const receipt = await tx.wait()
       console.log(receipt)
@@ -368,11 +391,15 @@ export default function Home() {
                       Show Wallet
                     </Button>
                   )}
-                  
 
-                  <Button onClick={disconnectWallet}>
-                    Disconnect
-                  </Button>
+
+                  {walletType != "magic" && (
+                    <Button onClick={disconnectWallet}>
+                      Disconnect
+                    </Button>
+                  )}
+
+                  
                 </div>
               )}
               
