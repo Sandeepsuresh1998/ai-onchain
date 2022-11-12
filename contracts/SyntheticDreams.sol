@@ -18,16 +18,16 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     uint256 MAX_SUPPLY = 10000;
     uint256 MAX_MINTS = 5;
 
-    //Owner of the contract is the one who deploys it 
+    // Owner of the contract is the one who deploys it 
     constructor() ERC721("Synthetic Dreams", "SD") {}
 
     // Registry that holds all unique text ids 
     mapping(bytes32 => bool) internal registry;
 
-    //Mapping of tokenId to the text ID of the token
+    // Mapping of tokenId to the text ID of the token
     mapping(uint256 => bytes32) internal tokenIdToTextId;
 
-    //Mapping of number of mints for an address
+    // Mapping of number of mints for an address
     mapping(address => uint) public walletMints;
 
     function contractURI() public pure returns (string memory) {
@@ -66,7 +66,6 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
         _safeMint(recipient, currentTokenId);
 
         // Set the tokenURI for the NFT
-        // TODO: tokenURI validation here (might be expensive)
         _setTokenURI(currentTokenId, tokenURI);
 
         // Transfer mint fee to wallet
@@ -98,5 +97,13 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
             return true;
         }
         return false;
+    }
+
+    /*
+    Note I am only having this here so that in the case of a race condition 
+    where the metadata and the true tokenID don't match I can fix it
+    */
+    function updateTokenURI(uint256 tokenId, string memory newTokenURI) public onlyOwner {
+        _setTokenURI(tokenId, newTokenURI);
     }
 }

@@ -35,6 +35,7 @@ const darkTheme = createTheme({
 
 //OpenAPI.BASE = process.env.SERVER_URL;
 OpenAPI.BASE = "http://localhost:8000";
+MINT_PRICE = "0.03"
 
 export default function Home() {
   const [alert, setAlert] = useState({
@@ -51,7 +52,7 @@ export default function Home() {
   const [openai, setOpenAI] = useState(null);
   const [walletType, setWalletType] = useState(null);
   const [mintedTokenId, setMintedTokenId] = useState(null);
-  const [internalTokenId, setInternalTokenId] = useState(0);
+  const [isMintLoading, setMintLoading] = useState(false);
 
   function addWalletListener() {
     if (window.ethereum) {
@@ -61,6 +62,7 @@ export default function Home() {
           setAddress(accounts[0]);
         } else {
           setAddress(null);
+          setIsConnected(false);
         }
       });
     }
@@ -96,7 +98,16 @@ export default function Home() {
     if (!val) return;
     setTextInput(val);
 
+   
     try {
+      if (!isConnected) {
+        setAlert({
+          msg: "Please connect your wallet first",
+          type: "error",
+        });
+        return
+      }
+  
       setIsLoading(true);
       const response = await openai.createImage({
         prompt: val,
@@ -110,11 +121,11 @@ export default function Home() {
         msg: "dreaming complete",
       });
     } catch (e) {
-      console.log(e);
       setAlert({
-        msg: "Bug in the dream code.",
-        type: "error",
+        msg: "Error in minting process, please contact @sandeep98suresh on twitter",
+        type: "error"
       });
+      console.log(e);
     } finally {
       setIsLoading(false);
     }
@@ -180,6 +191,8 @@ export default function Home() {
         return
       }
 
+      setMintLoading(true)
+
       // Read Instance
       const alchemyProvider = new ethers.providers.AlchemyProvider("goerli", process.env.API_KEY)
       const provider_contract = new ethers.Contract(
@@ -210,9 +223,8 @@ export default function Home() {
       const addr = await signer.getAddress();
       console.log("Type of hashed text", typeof(final_hashed_text))
       // Gas estimations
-      const mint_price = ethers.utils.parseEther('0.05')
       let overrideOptions = {
-        value: ethers.utils.parseEther("0.05"),
+        value: ethers.utils.parseEther(MINT_PRICE),
       }
       if (walletInfo.walletType != "magic") {
         // Use alchemy provider directly, magic seems to fail
@@ -230,7 +242,7 @@ export default function Home() {
         
         overrideOptions = {
           gasLimit: mintGasFees,
-          value: ethers.utils.parseEther("0.05"),
+          value: ethers.utils.parseEther(MINT_PRICE),
         }
       }
 
@@ -250,6 +262,8 @@ export default function Home() {
       });
     } catch (error) {
       console.log(error)
+    } finally {
+      setMintLoading(false)
     }
   }
 
@@ -305,7 +319,7 @@ export default function Home() {
               <div></div>
             )}
             
-            {isImageLoading && (
+            {(isImageLoading || isMintLoading) && (
               <Box
                 minHeight="30vh"
                 sx={{
@@ -318,7 +332,7 @@ export default function Home() {
               </Box>
             )}
 
-            {!isImageLoading && imageUrl && (
+            {!isImageLoading && imageUrl && !isMintLoading && (
               <Box
                 minHeight="30vh"
                 sx={{
@@ -348,7 +362,6 @@ export default function Home() {
             <TextField
               name="prompt"
               size="small"
-              autoFocus="true"
               placeholder="Create a dream"
             />
             <Box mb={2} />
