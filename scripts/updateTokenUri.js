@@ -35,7 +35,6 @@ const updateTokenURI = async () => {
         gasLimit: updateGasFees,
     }
 
-
     const tx = await contractInstance.updateTokenURI(
         tokenId,
         newTokenURI,

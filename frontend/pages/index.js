@@ -143,18 +143,17 @@ export default function Home() {
       provider,
     )
     
-    // Grab next token id
-    let tokenId = await contractInstance.getCurrentToken()
-    const newTokenId = tokenId.toNumber() + 1
-    
-    console.log("TokenID: ", newTokenId)
-
     // Get IPFS link for the Image
     const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
       image_uri: imageUrl,
     });
     const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
 
+    // Grab next token id
+    let tokenId = await contractInstance.getCurrentToken()
+    const newTokenId = tokenId.toNumber() + 1
+    
+    console.log("TokenID: ", newTokenId)
     
     // Contruct metadata with next token id
     var metadata = {
@@ -217,15 +216,17 @@ export default function Home() {
       }
 
       // Create metadata for new image
-      const nft_metadata_uri = await create_metadata();
       const final_hashed_text = hashedText.valueOf()
       const signer = await provider.getSigner();
       const addr = await signer.getAddress();
-      console.log("Type of hashed text", typeof(final_hashed_text))
-      // Gas estimations
+
+      // Options to be passed into mint call
       let overrideOptions = {
         value: ethers.utils.parseEther(MINT_PRICE),
       }
+
+      // Create metadata for NFT
+      const nft_metadata_uri = await create_metadata();
       if (walletInfo.walletType != "magic") {
         // Use alchemy provider directly, magic seems to fail
         // TODO: Change network based on prod vs int
