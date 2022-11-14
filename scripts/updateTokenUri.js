@@ -1,8 +1,22 @@
 const hre = require("hardhat");
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
+const { DefaultService } = require("../frontend/backend-client");
+const { OpenAPI } = require("../frontend/backend-client");
+
+const getTokenIdFromName = (name) => {
+    const tokenId = name.substring(name.indexOf("#") + 1)
+    console.log("Number: " + 1)
+}
 
 
 const updateTokenURI = async () => {
+
+    // Set OpenAI base
+    OpenAPI.BASE = "http://localhost:8000";
+
+    // Base IPFS URL
+    const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
+
     // Get Alchemy API Key
     const API_KEY = process.env.API_KEY;
 
@@ -28,17 +42,43 @@ const updateTokenURI = async () => {
     const newTokenURI = "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9FVC5aSQaXFKfVVYJb7"
 
     // Worker will fix all tokenURIs, if mismatch
-    for (let i = 1; i <= 10000; i++) {
+    for (let i = 2; i <= 10000; i++) {
         let tokenURI = await contractInstance.tokenURI(hre.ethers.BigNumber.from(i))
         console.log(tokenURI)
         // Convert tokenURI to json
         const resp = await fetch(tokenURI);
-        console.log(await resp.json())
+        const json = await resp.json();
+        console.log(json)
+        console.log(json.name)
 
         // Condition to check for mismatch
         if (i == 1) {
-            continue;``
+            continue;
         }
+
+        const name = json.name
+        // Grab tokenID from metadata
+        const extractedTokenId = parseInt(name.substring(name.indexOf("#") + 1)).to
+        
+        // If the tokenID and the extracted tokenId in name is equal move on
+        if (i == extractedTokenId) {
+            console.log("They are the same no need to worry")
+            continue;
+        }
+
+        // Generate new tokenURI with corrected metadata
+        const newMetadata = {
+            name: `Dream #${i}`,
+            description: json.description,
+            image: json.image,
+        }
+
+        const metadataRes = await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
+            metadata: metadata,
+        });
+        const newTokenURI = baseIpfsUrl + metadataRes.ipfs_uri
+
+        console.log("New token URI")
 
         // Get gas fees for 
         const updateGasFees = contractInstance.estimateGas.updateTokenURI(
@@ -53,7 +93,7 @@ const updateTokenURI = async () => {
         const tx = await contractInstance.updateTokenURI(
             tokenId,
             newTokenURI,
-            overrideOptions
+            overrideOptions,
         )
         await tx.wait()
         console.log(`Update the tokenURI, https://goerli.etherscan.io/tx/${tx.hash}`)
