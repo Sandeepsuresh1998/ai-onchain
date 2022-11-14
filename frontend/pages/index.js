@@ -35,7 +35,7 @@ const darkTheme = createTheme({
 
 //OpenAPI.BASE = process.env.SERVER_URL;
 OpenAPI.BASE = "http://localhost:8000";
-MINT_PRICE = "0.03"
+const MINT_PRICE = "0.03"
 
 export default function Home() {
   const [alert, setAlert] = useState({

@@ -32,33 +32,35 @@ const updateTokenURI = async () => {
         let tokenURI = await contractInstance.tokenURI(hre.ethers.BigNumber.from(i))
         console.log(tokenURI)
         // Convert tokenURI to json
-
         const resp = await fetch(tokenURI);
         console.log(await resp.json())
-        break;
+
+        // Condition to check for mismatch
+        if (i == 1) {
+            continue;``
+        }
+
+        // Get gas fees for 
+        const updateGasFees = contractInstance.estimateGas.updateTokenURI(
+            tokenId,
+            newTokenURI,
+        )
+
+        const overrideOptions = {
+            gasLimit: updateGasFees,
+        }
+
+        const tx = await contractInstance.updateTokenURI(
+            tokenId,
+            newTokenURI,
+            overrideOptions
+        )
+        await tx.wait()
+        console.log(`Update the tokenURI, https://goerli.etherscan.io/tx/${tx.hash}`)
+
+
     } 
-
-    return;
-
-
-
-    // Get gas fees for 
-    const updateGasFees = contractInstance.estimateGas.updateTokenURI(
-        tokenId,
-        newTokenURI,
-    )
-
-    const overrideOptions = {
-        gasLimit: updateGasFees,
-    }
-
-    const tx = await contractInstance.updateTokenURI(
-        tokenId,
-        newTokenURI,
-        overrideOptions
-    )
-    await tx.wait()
-    console.log(`Update the tokenURI, https://goerli.etherscan.io/tx/${tx.hash}`)
+    
 }
 
 updateTokenURI().then(() => process.exit(0))
