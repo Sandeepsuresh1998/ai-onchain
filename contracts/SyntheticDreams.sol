@@ -13,10 +13,9 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     Counters.Counter private _tokenIds;
 
     uint256 MINT_PRICE = 0.03 ether;
-    uint256 LIST_PRICE = 0.01 ether;
 
     uint256 MAX_SUPPLY = 10000;
-    uint256 MAX_MINTS = 5;
+    uint256 MAX_MINTS = 10;
 
     // Owner of the contract is the one who deploys it 
     constructor() ERC721("Synthetic Dreams", "SD") {}
@@ -41,8 +40,8 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
             bytes32 textId: The hashed (sha3) of the text input for the model (note this should be normalized)
 
     */
-    function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
-        require(msg.value == MINT_PRICE, "beep boop need more eth to mint");
+    function mintToken(address recipient, bytes32 textId) public payable returns (uint) {
+        require(msg.value >= MINT_PRICE, "Need more eth to mint");
         require(registry[textId] == false, "Text has alredy been claimed");
         require(walletMints[recipient] <= MAX_MINTS, "You have already minted your limit");
 
@@ -65,9 +64,6 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
         // Actual safe mint call to mint the NFT this is inherited
         _safeMint(recipient, currentTokenId);
 
-        // Set the tokenURI for the NFT
-        _setTokenURI(currentTokenId, tokenURI);
-
         // Transfer mint fee to wallet
         payable(owner()).transfer(msg.value);
 
@@ -76,16 +72,6 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
         walletMints[recipient] = mints+1;
 
         return currentTokenId;
-    }
-
-    //This function can update the price to list an NFT on the entire marketplace
-    function updateListPrice(uint256 _newListPrice) public onlyOwner {
-        LIST_PRICE = _newListPrice;
-    }
-
-    // Below are all heloer view functions
-    function getListPrice() public view returns (uint256) {
-        return LIST_PRICE;
     }
 
     function getCurrentToken() public view returns (uint256) {
@@ -103,7 +89,7 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     Note I am only having this here so that in the case of a race condition 
     where the metadata and the true tokenID don't match I can fix it
     */
-    function updateTokenURI(uint256 tokenId, string memory newTokenURI) public onlyOwner {
+    function updateTokenURI(uint256 tokenId, string memory newTokenURI) external onlyOwner {
         _setTokenURI(tokenId, newTokenURI);
     }
 }
