@@ -32,6 +32,10 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     function contractURI() public pure returns (string memory) {
         return "https://gateway.pinata.cloud/ipfs/QmYiDdgY7Nxsf3fNnCUWNHVtn2fmSBMYYr1QxNS8c5ehEW";
     }
+
+    function totalSupply() public view returns (uint256) {
+        return MAX_SUPPLY;
+    }
     /*
         Function to mint the NFT
         params:
@@ -40,9 +44,9 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
             bytes32 textId: The hashed (sha3) of the text input for the model (note this should be normalized)
 
     */
-    function mintToken(address recipient, bytes32 textId) public payable returns (uint) {
+    function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
         require(msg.value >= MINT_PRICE, "Need more eth to mint");
-        require(registry[textId] == false, "Text has alredy been claimed");
+        require(registry[textId] == false, "Text has already been claimed");
         require(walletMints[recipient] <= MAX_MINTS, "You have already minted your limit");
 
         // Create registry entry for the new text id
@@ -53,16 +57,18 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
 
         // Set the id of the newly minted nft to this
         uint256 currentTokenId = _tokenIds.current();
-
         if (currentTokenId > MAX_SUPPLY) {
             revert("This NFT project has been sold out");
         }
 
-        // Create mapping of token id to text id
+        // Create mapping of token id to text hash
         tokenIdToTextId[currentTokenId] = textId;
 
         // Actual safe mint call to mint the NFT this is inherited
         _safeMint(recipient, currentTokenId);
+
+        // Set tokenID's tokenURI
+        _setTokenURI(currentTokenId, tokenURI);
 
         // Transfer mint fee to wallet
         payable(owner()).transfer(msg.value);
@@ -87,7 +93,7 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
 
     /*
     Note I am only having this here so that in the case of a race condition 
-    where the metadata and the true tokenID don't match I can fix it
+    where the metadata and the true tokenID don't match
     */
     function updateTokenURI(uint256 tokenId, string memory newTokenURI) external onlyOwner {
         _setTokenURI(tokenId, newTokenURI);

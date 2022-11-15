@@ -1,19 +1,7 @@
 const hre = require("hardhat");
 const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-const { DefaultService } = require("../frontend/backend-client");
-const { OpenAPI } = require("../frontend/backend-client");
-
-const getTokenIdFromName = (name) => {
-    const tokenId = name.substring(name.indexOf("#") + 1)
-    console.log("Number: " + 1)
-}
-
 
 const updateTokenURI = async () => {
-
-    // Set OpenAI base
-    OpenAPI.BASE = "http://localhost:8000";
-
     // Base IPFS URL
     const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
 
@@ -32,7 +20,7 @@ const updateTokenURI = async () => {
 
     // Get contract ABI and address
     const abi = contract.abi
-    const contractAddress =  "0x64caFaf56173EF3e6bCFb3ad1Ec7B9314bfb0eB2"
+    const contractAddress =  "0xA847618e28fB3b9BfDee8894f0b04b224d57de78"
 
     // Create a contract instance
     const contractInstance = new hre.ethers.Contract(contractAddress, abi, signer)
@@ -42,27 +30,20 @@ const updateTokenURI = async () => {
     const newTokenURI = "https://gateway.pinata.cloud/ipfs/QmaHupJ2t2g2dwMWbqU2jiwH14D9FVC5aSQaXFKfVVYJb7"
 
     // Worker will fix all tokenURIs, if mismatch
-    for (let i = 2; i <= 10000; i++) {
+    for (let i = 1; i <= 10000; i++) {
+        console.log(`Processing tokenID ${i}`)
         let tokenURI = await contractInstance.tokenURI(hre.ethers.BigNumber.from(i))
-        console.log(tokenURI)
         // Convert tokenURI to json
         const resp = await fetch(tokenURI);
         const json = await resp.json();
-        console.log(json)
-        console.log(json.name)
-
-        // Condition to check for mismatch
-        if (i == 1) {
-            continue;
-        }
-
         const name = json.name
+
         // Grab tokenID from metadata
         const extractedTokenId = parseInt(name.substring(name.indexOf("#") + 1)).to
         
-        // If the tokenID and the extracted tokenId in name is equal move on
+        // Condition to check for mismatch
         if (i == extractedTokenId) {
-            console.log("They are the same no need to worry")
+            console.log('Skipped tokenID', i)
             continue;
         }
 
@@ -72,13 +53,15 @@ const updateTokenURI = async () => {
             description: json.description,
             image: json.image,
         }
-
-        const metadataRes = await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
-            metadata: metadata,
+        let metadataRes = await fetch("http://localhost:8000/upload_metadata", {
+            method: 'post',
+            body: JSON.stringify({metadata: newMetadata}),
+            headers: {'Content-Type': 'application/json'}
         });
-        const newTokenURI = baseIpfsUrl + metadataRes.ipfs_uri
-
-        console.log("New token URI")
+        metadataRes = await metadataRes.json();
+        console.log(metadataRes);
+        const newTokenURI = baseIpfsUrl + metadataRes.ipfs_uri;
+        console.log("New token URI", newTokenURI)
 
         // Get gas fees for 
         const updateGasFees = contractInstance.estimateGas.updateTokenURI(
@@ -91,14 +74,12 @@ const updateTokenURI = async () => {
         }
 
         const tx = await contractInstance.updateTokenURI(
-            tokenId,
+            hre.ethers.BigNumber.from(i),
             newTokenURI,
             overrideOptions,
         )
         await tx.wait()
         console.log(`Update the tokenURI, https://goerli.etherscan.io/tx/${tx.hash}`)
-
-
     } 
     
 }
@@ -108,4 +89,3 @@ updateTokenURI().then(() => process.exit(0))
     console.error(error);
     process.exit(1);
 });
-

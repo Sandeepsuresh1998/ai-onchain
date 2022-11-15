@@ -134,9 +134,6 @@ export default function Home() {
   const create_metadata = async () => {
     const baseIpfsUrl = "https://gateway.pinata.cloud/ipfs/";
     // Read-Only Contract instance
-    console.log("Contract Address", process.env.CONTRACT_ADDRESS)
-    console.log("Provider", provider)
-    console.log("ABI", contract.abi)
     const contractInstance = new ethers.Contract(
       process.env.CONTRACT_ADDRESS,
       contract.abi,
@@ -179,7 +176,8 @@ export default function Home() {
   const handleMint = async (event) => {
     event.preventDefault();
     const walletInfo = await magic.connect.getWalletInfo();
-    console.log("Wallet Type", walletInfo.walletType)
+    console.log("Wallet Type", walletInfo.walletType);
+    console.log("Contract Address", process.env.CONTRACT_ADDRESS);
     
     try {
       if (!isConnected) {
@@ -237,7 +235,7 @@ export default function Home() {
             nft_metadata_uri,
             final_hashed_text,
             {
-              value: mint_price
+              value: ethers.utils.parseEther(MINT_PRICE),
             },
         );
         
