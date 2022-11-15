@@ -5,6 +5,7 @@ async function main() {
   // Start deployment, returning a promise that resolves to a contract object
   const aiNFT = await AINFT.deploy(); // Instance of the contract 
   console.log("Contract deployed to address:", aiNFT.address);
+  console.log(aiNFT);
 }
 
 main()

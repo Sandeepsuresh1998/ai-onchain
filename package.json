@@ -22,7 +22,7 @@
   "devDependencies": {
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "@nomiclabs/hardhat-ethers": "^2.1.1",
-    "ethers": "^5.7.1",
+    "ethers": "^5.7.2",
     "hardhat": "^2.11.1",
     "openapi-typescript-codegen": "^0.23.0"
   },
@@ -30,6 +30,10 @@
     "@ensdomains/eth-ens-namehash": "^2.0.15",
     "@openzeppelin/contracts": "^4.7.3",
     "dotenv": "^16.0.2",
+    "node-fetch": "^3.3.0",
     "web3": "^1.8.0"
+  },
+  "bin": {
+    "fix-uris": "./scripts/updateTokenUri.js"
   }
 }

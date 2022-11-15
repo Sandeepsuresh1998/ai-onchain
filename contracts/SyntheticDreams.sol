@@ -13,10 +13,9 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     Counters.Counter private _tokenIds;
 
     uint256 MINT_PRICE = 0.03 ether;
-    uint256 LIST_PRICE = 0.01 ether;
 
     uint256 MAX_SUPPLY = 10000;
-    uint256 MAX_MINTS = 5;
+    uint256 MAX_MINTS = 10;
 
     // Owner of the contract is the one who deploys it 
     constructor() ERC721("Synthetic Dreams", "SD") {}
@@ -33,6 +32,10 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     function contractURI() public pure returns (string memory) {
         return "https://gateway.pinata.cloud/ipfs/QmYiDdgY7Nxsf3fNnCUWNHVtn2fmSBMYYr1QxNS8c5ehEW";
     }
+
+    function totalSupply() public view returns (uint256) {
+        return MAX_SUPPLY;
+    }
     /*
         Function to mint the NFT
         params:
@@ -42,8 +45,8 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
 
     */
     function mintToken(address recipient, string memory tokenURI, bytes32 textId) public payable returns (uint) {
-        require(msg.value == MINT_PRICE, "beep boop need more eth to mint");
-        require(registry[textId] == false, "Text has alredy been claimed");
+        require(msg.value >= MINT_PRICE, "Need more eth to mint");
+        require(registry[textId] == false, "Text has already been claimed");
         require(walletMints[recipient] <= MAX_MINTS, "You have already minted your limit");
 
         // Create registry entry for the new text id
@@ -54,18 +57,17 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
 
         // Set the id of the newly minted nft to this
         uint256 currentTokenId = _tokenIds.current();
-
         if (currentTokenId > MAX_SUPPLY) {
             revert("This NFT project has been sold out");
         }
 
-        // Create mapping of token id to text id
+        // Create mapping of token id to text hash
         tokenIdToTextId[currentTokenId] = textId;
 
         // Actual safe mint call to mint the NFT this is inherited
         _safeMint(recipient, currentTokenId);
 
-        // Set the tokenURI for the NFT
+        // Set tokenID's tokenURI
         _setTokenURI(currentTokenId, tokenURI);
 
         // Transfer mint fee to wallet
@@ -76,16 +78,6 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
         walletMints[recipient] = mints+1;
 
         return currentTokenId;
-    }
-
-    //This function can update the price to list an NFT on the entire marketplace
-    function updateListPrice(uint256 _newListPrice) public onlyOwner {
-        LIST_PRICE = _newListPrice;
-    }
-
-    // Below are all heloer view functions
-    function getListPrice() public view returns (uint256) {
-        return LIST_PRICE;
     }
 
     function getCurrentToken() public view returns (uint256) {
@@ -101,9 +93,9 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
 
     /*
     Note I am only having this here so that in the case of a race condition 
-    where the metadata and the true tokenID don't match I can fix it
+    where the metadata and the true tokenID don't match
     */
-    function updateTokenURI(uint256 tokenId, string memory newTokenURI) public onlyOwner {
+    function updateTokenURI(uint256 tokenId, string memory newTokenURI) external onlyOwner {
         _setTokenURI(tokenId, newTokenURI);
     }
 }
