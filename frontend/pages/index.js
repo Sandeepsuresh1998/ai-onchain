@@ -33,8 +33,8 @@ const darkTheme = createTheme({
   },
 });
 
-//OpenAPI.BASE = process.env.SERVER_URL;
-OpenAPI.BASE = "http://localhost:8000";
+OpenAPI.BASE = process.env.SERVER_URL;
+// OpenAPI.BASE = "http://localhost:8000";
 const MINT_PRICE = "0.03"
 
 export default function Home() {
@@ -51,7 +51,6 @@ export default function Home() {
   const [provider, setProvider] = useState(null);
   const [openai, setOpenAI] = useState(null);
   const [walletType, setWalletType] = useState(null);
-  const [mintedTokenId, setMintedTokenId] = useState(null);
   const [isMintLoading, setMintLoading] = useState(false);
 
   function addWalletListener() {
@@ -72,7 +71,7 @@ export default function Home() {
 
     // Set Magic Instance
     const magicInstance = new Magic(process.env.MAGIC_PK_LIVE, { 
-      network: "goerli",
+      network: "mainnet",
       extensions: [new ConnectExtension()]
     });
     const providerInstance = new ethers.providers.Web3Provider(magicInstance.rpcProvider);
@@ -171,8 +170,6 @@ export default function Home() {
     return nft_metadata_uri
   }
 
-  const byteSize = str => new Blob([str]).size;
-
   const handleMint = async (event) => {
     event.preventDefault();
     const walletInfo = await magic.connect.getWalletInfo();
@@ -191,7 +188,7 @@ export default function Home() {
       setMintLoading(true)
 
       // Read Instance
-      const alchemyProvider = new ethers.providers.AlchemyProvider("goerli", process.env.API_KEY)
+      const alchemyProvider = new ethers.providers.AlchemyProvider("homestead", process.env.API_KEY)
       const provider_contract = new ethers.Contract(
         process.env.CONTRACT_ADDRESS,
         contract.abi,

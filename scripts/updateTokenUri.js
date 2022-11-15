@@ -20,7 +20,7 @@ const updateTokenURI = async () => {
 
     // Get contract ABI and address
     const abi = contract.abi
-    const contractAddress =  "0xA847618e28fB3b9BfDee8894f0b04b224d57de78"
+    const contractAddress = process.env.CONTRACT_ADDRESS
 
     // Create a contract instance
     const contractInstance = new hre.ethers.Contract(contractAddress, abi, signer)
