@@ -1,8 +1,8 @@
 {
-    "name": "AI meets NFTs",
-    "description": "The first NFT collection created entirely by AI in a community driven manner",
+    "name": "Synthetic Dreams",
+    "description": "Our dreams are unique. No two people have the same dreams. Dreams can be a way to connect with our higher self. Synthetic dreams, however, are different. They are artificially created dreams, often for entertainment or marketing purposes. Others believe that synthetic dreams are a way to control our mind. They believe that we will be able to be controlled by whoever creates our dreams. We should be careful with synthetic dreams. They may even feel more real than our regular dreams. If we are not careful, we may find ourselves believing in things that are not real. Am I real?",
     "image": "https://gateway.pinata.cloud/ipfs/QmX2gq76sWRzqvBnRmJH7Zv5iMRv9x7GEQQFYc984BVXht",
-    "external_link": "external-link-url",
-    "seller_fee_basis_points": 100,
-    "fee_recipient": "0xcEF789ec937B46dc82C8fB4E3E4bab3254651cEB"
+    "external_link": "https://www.syntheticdreams.xyz/",
+    "seller_fee_basis_points": 200,
+    "fee_recipient": "0xabbcA229badcD0175F00D85857200DfED257807b"
   }

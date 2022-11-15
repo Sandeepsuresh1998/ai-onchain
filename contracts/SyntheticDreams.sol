@@ -29,8 +29,8 @@ contract SyntheticDreams is ERC721URIStorage, Ownable {
     // Mapping of number of mints for an address
     mapping(address => uint) public walletMints;
 
-    function contractURI() public pure returns (string memory) {
-        return "https://gateway.pinata.cloud/ipfs/QmYiDdgY7Nxsf3fNnCUWNHVtn2fmSBMYYr1QxNS8c5ehEW";
+    function contractURI() public view returns (string memory) {
+        return "https://turquoise-selective-cheetah-845.mypinata.cloud/ipfs/QmTeWQnCRy4XwWzcgujyfPsxDFeTDa47cE8MT2p2dJ8MUD";
     }
 
     function totalSupply() public view returns (uint256) {
