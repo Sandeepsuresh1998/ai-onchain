@@ -34,7 +34,7 @@ const darkTheme = createTheme({
 });
 
 OpenAPI.BASE = process.env.SERVER_URL;
-// OpenAPI.BASE = "http://localhost:8000";
+//OpenAPI.BASE = "http://localhost:8000";
 const MINT_PRICE = "0.03"
 
 export default function Home() {
@@ -121,7 +121,7 @@ export default function Home() {
       });
     } catch (e) {
       setAlert({
-        msg: "Error in minting process, please contact @sandeep98suresh on twitter",
+        msg: "Error in dreaming process, please contact @sandeep98suresh on twitter",
         type: "error"
       });
       console.log(e);
@@ -157,8 +157,6 @@ export default function Home() {
       description: textInput,
       image: ipfsImageUrl,
     };
-
-    setMintedTokenId(newTokenId)
 
     // Call api to pin metadata
     const metadataRes =
