@@ -109,13 +109,12 @@ export default function Home() {
       }
   
       setIsLoading(true);
-      const response = await openai.createImage({
+      const image_res = await DefaultService.generateDalle2ImagePost({
         prompt: val,
-        n: 1,
-        size: "1024x1024",
         user: address,
-      });
-      const image_url = response.data.data[0].url;
+      })
+      console.log(image_res);
+      const image_url = image_res.image_uris[0]
       setImageUrl(image_url);
       setAlert({
         msg: "dreaming complete",
@@ -258,7 +257,7 @@ export default function Home() {
     } catch (error) {
       console.log(error)
       setAlert({
-        msg: "Insuffcient funds in wallet, mint price is 0.03 Ethereum. Please contract @robotdreams22 for help",
+        msg: "Insuffcient funds in wallet, mint price is 0.03 Ethereum. Please add some funds or contact @sandeepsuresh98 for help",
         type: "error"
       })
     } finally {

@@ -4,5 +4,6 @@
 
 export type ImageToTextRequest = {
     prompt: string;
+    user: string;
 };
 

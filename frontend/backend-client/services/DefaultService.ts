@@ -21,7 +21,7 @@ export class DefaultService {
      * @returns ImageToTextResponse Successful Response
      * @throws ApiError
      */
-    public static stableDiffusionImg2TxtPost(
+    public static generateDalle2ImagePost(
         requestBody: ImageToTextRequest,
     ): CancelablePromise<ImageToTextResponse> {
         return __request(OpenAPI, {
