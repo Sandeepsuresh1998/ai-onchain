@@ -11,7 +11,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 export default function ButtonAppBar() {
   return (
     <Box sx={{ flexGrow: 1}}>
-      <AppBar position="static" sx={{alignItems: "flex-end", backgroundColor: "transparent", outlineColor: "transparent"}}>
+      <AppBar position="static" sx={{alignItems: "flex-end", backgroundColor: "transparent", backgroundImage: "none"}}>
         <Toolbar>
           <Link href="https://opensea.io/collection/synthetic-dreams-v2-1">
             <Button>Opensea</Button>
