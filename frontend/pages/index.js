@@ -22,6 +22,7 @@ import { Magic } from "magic-sdk"
 import { ConnectExtension } from "@magic-ext/connect";
 import { ethers } from "ethers";
 import { Configuration, OpenAIApi } from "openai";
+import ButtonAppBar from "../components/navbar";
 
 const darkTheme = createTheme({
   palette: {
@@ -306,6 +307,7 @@ export default function Home() {
           width: "100vw",
         }}
       >
+        <ButtonAppBar></ButtonAppBar>
         <AppContainer>
           <AppTitle>Synthetic Dreams</AppTitle>
           <Paper elevation={2} sx={{ my: 2, overflow: "hidden" }}>
