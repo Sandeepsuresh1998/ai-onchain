@@ -19,8 +19,8 @@ export default function ButtonAppBar() {
           <Link href="https://twitter.com/robotdreams22">
             <Button>Twitter</Button>
           </Link>
-          <Link href="https://twitter.com/robotdreams22">
-            <Button>Twitter</Button>
+          <Link href="https://etherscan.io/address/0xdc734177194bf36c38709e50006a631abdf9233b#code">
+            <Button>Etherscan</Button>
           </Link>
         </Toolbar>
       </AppBar>
