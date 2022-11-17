@@ -257,6 +257,10 @@ export default function Home() {
       });
     } catch (error) {
       console.log(error)
+      setAlert({
+        msg: "Insuffcient funds in wallet, mint price is 0.03 Ethereum. Please contract @robotdreams22 for help",
+        type: "error"
+      })
     } finally {
       setMintLoading(false)
     }

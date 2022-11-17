@@ -19,8 +19,8 @@ export default function ButtonAppBar() {
           <Link href="https://twitter.com/robotdreams22">
             <Button>Twitter</Button>
           </Link>
-          <Link href="inherit">
-            <Button>Discord</Button>
+          <Link href="https://twitter.com/robotdreams22">
+            <Button>Twitter</Button>
           </Link>
         </Toolbar>
       </AppBar>
