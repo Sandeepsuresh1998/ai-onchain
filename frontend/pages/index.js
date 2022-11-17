@@ -109,12 +109,15 @@ export default function Home() {
       }
   
       setIsLoading(true);
-      const image_res = await DefaultService.generateDalle2ImagePost({
-        prompt: val,
-        user: address,
+      const image_res = await fetch("/api/generateImage", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({prompt: val, user: address})
       })
-      console.log(image_res);
-      const image_url = image_res.image_uris[0]
+      const image_url = image_res.image_url
+      console.log(image_url)
       setImageUrl(image_url);
       setAlert({
         msg: "dreaming complete",
