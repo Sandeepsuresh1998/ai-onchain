@@ -139,7 +139,10 @@ export default function Home() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ image_uri: imageUrl }),
+      body: JSON.stringify({ 
+        image_uri: imageUrl,
+        description: textInput,
+      }),
     });
     const imageRes = await pinFileResponse.json();
     const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
@@ -151,8 +154,9 @@ export default function Home() {
     console.log("TokenID: ", newTokenId)
     
     // Contruct metadata with next token id
+    const name = `Dream #${newTokenId}`
     var metadata = {
-      name: `Dream #${newTokenId}`,
+      name: name,
       description: textInput,
       image: ipfsImageUrl,
     };
@@ -163,7 +167,10 @@ export default function Home() {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ metadata: metadata }),
+      body: JSON.stringify({ 
+        metadata: metadata,
+        description: name, 
+      }),
     });
     const metadataRes = await pinJsonResponse.json();
 
