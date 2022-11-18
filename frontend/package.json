@@ -19,6 +19,7 @@
     "@magic-ext/connect": "^3.1.0",
     "@mui/icons-material": "^5.10.6",
     "@mui/material": "^5.10.6",
+    "@pinata/sdk": "^2.1.0",
     "@rainbow-me/rainbowkit": "^0.6.0",
     "@tailwindcss/aspect-ratio": "^0.4.2",
     "axios": "^0.27.2",

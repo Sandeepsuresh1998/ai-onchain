@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import Particles from "react-particles";
 import { loadFull } from "tsparticles";
-import { DefaultService } from "../backend-client";
-import { OpenAPI } from "../backend-client";
 import {
   Typography,
   ThemeProvider,
@@ -21,7 +19,6 @@ import contract from "../util/SyntheticDreams.json";
 import { Magic } from "magic-sdk"
 import { ConnectExtension } from "@magic-ext/connect";
 import { ethers } from "ethers";
-import { Configuration, OpenAIApi } from "openai";
 import ButtonAppBar from "../components/navbar";
 
 const darkTheme = createTheme({
@@ -34,8 +31,6 @@ const darkTheme = createTheme({
   },
 });
 
-OpenAPI.BASE = process.env.SERVER_URL;
-//OpenAPI.BASE = "http://localhost:8000";
 const MINT_PRICE = "0.03"
 
 export default function Home() {
@@ -50,7 +45,6 @@ export default function Home() {
   const [isConnected, setIsConnected] = useState(false);
   const [magic, setMagic] = useState(null);
   const [provider, setProvider] = useState(null);
-  const [openai, setOpenAI] = useState(null);
   const [walletType, setWalletType] = useState(null);
   const [isMintLoading, setMintLoading] = useState(false);
 
@@ -71,21 +65,17 @@ export default function Home() {
   useEffect(() => {
 
     // Set Magic Instance
-    const magicInstance = new Magic(process.env.MAGIC_PK_LIVE, { 
-      network: "mainnet",
-      extensions: [new ConnectExtension()]
-    });
+    const magicInstance = new Magic(
+      process.env.MAGIC_PK_LIVE,
+      {
+        network: "mainnet",
+        extensions: [new ConnectExtension()]
+      }
+    );
     const providerInstance = new ethers.providers.Web3Provider(magicInstance.rpcProvider);
 
-    // Create Dalle2 Instance
-    const configuration = new Configuration({
-      apiKey: process.env.DALLE_SK,
-    });
-    const openai = new OpenAIApi(configuration);
-  
     setMagic(magicInstance)
     setProvider(providerInstance)
-    setOpenAI(openai)
 
     addWalletListener()
   }, [])
@@ -109,12 +99,16 @@ export default function Home() {
       }
   
       setIsLoading(true);
-      const image_res = await DefaultService.generateDalle2ImagePost({
-        prompt: val,
-        user: address,
-      })
-      console.log(image_res);
-      const image_url = image_res.image_uris[0]
+      const imageResponse = await fetch("/api/textToImage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ prompt: val, user: address }),
+      });
+      const image_res = await imageResponse.json();
+      const image_url = image_res["image_uris"][0]
+      console.log(image_url);
       setImageUrl(image_url);
       setAlert({
         msg: "dreaming complete",
@@ -140,9 +134,14 @@ export default function Home() {
     )
     
     // Get IPFS link for the Image
-    const imageRes = await DefaultService.uploadImageToIpfsUploadImagePost({
-      image_uri: imageUrl,
+    const pinFileResponse = await fetch("/api/pinFileToIpfs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ image_uri: imageUrl }),
     });
+    const imageRes = await pinFileResponse.json();
     const ipfsImageUrl = imageRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
 
     // Grab next token id
@@ -159,10 +158,15 @@ export default function Home() {
     };
 
     // Call api to pin metadata
-    const metadataRes =
-      await DefaultService.uploadMetadataToIpfsUploadMetadataPost({
-        metadata: metadata,
-      });
+    const pinJsonResponse = await fetch("/api/pinJsonToIpfs", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ metadata: metadata }),
+    });
+    const metadataRes = await pinJsonResponse.json();
+
     const nft_metadata_uri = baseIpfsUrl + metadataRes.ipfs_uri
     
     return nft_metadata_uri
