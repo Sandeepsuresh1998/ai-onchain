@@ -16,7 +16,7 @@ export default function ButtonAppBar() {
           <Link href="https://opensea.io/collection/synthetic-dreams-v2-1">
             <Button>Opensea</Button>
           </Link>
-          <Link href="https://twitter.com/robotdreams22">
+          <Link href="https://twitter.com/sandeep98suresh">
             <Button>Twitter</Button>
           </Link>
           <Link href="https://etherscan.io/address/0xdc734177194bf36c38709e50006a631abdf9233b#code">
