@@ -381,7 +381,7 @@ export default function Home() {
             <Box mb={2} />
             {imageUrl && (
               <>
-                <Button onClick={handleMint} variant="outlined">
+                <Button onClick={handleMint} variant="contained">
                   Mint
                 </Button>
                 <Box mb={2} />
