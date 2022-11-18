@@ -174,8 +174,8 @@ export default function Home() {
     });
     const metadataRes = await pinJsonResponse.json();
 
-    const nft_metadata_uri = baseIpfsUrl + metadataRes.ipfs_uri
-    
+    const nft_metadata_uri = metadataRes.ipfs_uri.replace("ipfs://", baseIpfsUrl);
+    console.log("Metadata URI", nft_metadata_uri)
     return nft_metadata_uri
   }
 
